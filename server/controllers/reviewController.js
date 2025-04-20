@@ -6,7 +6,7 @@ export const getReviewsForVolunteer = async (req, res) => {
   try {
     const { volunteerId } = req.params;
 
-    const reviewsResult = await db.query(
+    const result = await db.query(
       `
         SELECT r.rating, r.comment, u.first_name as elder_first_name, u.last_name as elder_last_name, r.created_at
         FROM reviews r
@@ -17,10 +17,8 @@ export const getReviewsForVolunteer = async (req, res) => {
       [volunteerId]
     );
 
-    if (reviewsResult.rows.length === 0) {
-      return res
-        .status(200)
-        .json({ message: "No reviews found for this volunteer" });
+    if (result.rows.length === 0) {
+      return res.status(200).json({ reviews: [] });
     }
 
     const reviews = reviewsResult.rows;

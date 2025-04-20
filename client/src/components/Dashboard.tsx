@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, type SetStateAction } from "react";
 import { Button } from "../components/ui/button";
 import {
@@ -681,9 +679,7 @@ export default function DashboardPage() {
     const elapsedTime = Date.now() - startTime;
     const remainingTime = Math.max(0, minimumLoadingTime - elapsedTime);
 
-
     setTimeout(async () => {
-
       setIsFindingMatch(false);
       setShowCreativeLoading(false);
 
@@ -699,13 +695,10 @@ export default function DashboardPage() {
             matchData.volunteers
           );
 
-
-
           // updating both the main volunteers list and filtered list to show ONLY the matched volunteers
           setMatchedVolunteers(volunteersWithFavoriteStatus);
           setFilteredVolunteers(volunteersWithFavoriteStatus);
 
- 
           setIsShowingMatchResults(true);
 
           showToast(
@@ -1001,7 +994,6 @@ export default function DashboardPage() {
                         </motion.div>
                       ))}
 
-    
                       <motion.div
                         className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
                         animate={{
@@ -1096,7 +1088,7 @@ export default function DashboardPage() {
                   className="flex items-center gap-2 border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl px-4"
                   onClick={() => {
                     setIsFilterOpen(!isFilterOpen);
-                 
+
                     if (isFilterOpen && isShowingMatchResults) {
                       setIsShowingMatchResults(false);
                       setFilteredVolunteers(volunteers);
@@ -1269,7 +1261,6 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <>
-      
                     {isShowingMatchResults && (
                       <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 mb-6 flex items-center justify-between">
                         <div className="flex items-center">
