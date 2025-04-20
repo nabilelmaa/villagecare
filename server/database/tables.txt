@@ -9,6 +9,7 @@ CREATE TABLE users (
     city TEXT,
     bio TEXT,
     gender VARCHAR(10),
+    role VARCHAR(20) DEFAULT 'elder',
     profile_image_url VARCHAR(255),
     rating DECIMAL(3, 2),
     review_count INTEGER DEFAULT 0,

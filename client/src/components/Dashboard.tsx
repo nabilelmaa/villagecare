@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, type SetStateAction } from "react";
 import { Button } from "../components/ui/button";
 import {
@@ -107,7 +105,6 @@ interface FiltersState {
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("volunteers");
   const [matchedVolunteers, setMatchedVolunteers] = useState<Volunteer[]>([]);
-  const [showMatchModal, setShowMatchModal] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -135,7 +132,6 @@ export default function DashboardPage() {
     },
   });
 
-  // Add state for the creative loading animation
   const [showCreativeLoading, setShowCreativeLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingStage, setLoadingStage] = useState(0);
@@ -260,7 +256,6 @@ export default function DashboardPage() {
             `Failed to check favorite status for volunteer ${volunteer.id}:`,
             error
           );
-          // Continue with other volunteers even if one fails
         }
       }
 
@@ -907,12 +902,12 @@ export default function DashboardPage() {
       <div className="flex flex-1">
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 md:mb-8 gap-3 md:gap-4">
               <div>
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#EAAFC8] to-[#EC2F4B]">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#EAAFC8] to-[#EC2F4B]">
                   Welcome Back, {userData?.first_name || "User"}
                 </h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-sm sm:text-base text-gray-600 mt-1">
                   {currentRole === "elder"
                     ? "Let's find the perfect volunteer for your needs"
                     : "Find opportunities to help in your community"}
@@ -922,7 +917,7 @@ export default function DashboardPage() {
                 <Button
                   onClick={handleFindMatch}
                   disabled={isFindingMatch}
-                  className="bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 text-white shadow-md shadow-rose-200/50 rounded-xl px-6 py-2.5 h-auto relative overflow-hidden group"
+                  className="bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 text-white shadow-md shadow-rose-200/50 rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 h-auto text-sm sm:text-base relative overflow-hidden group"
                 >
                   <AnimatePresence mode="wait">
                     {showCreativeLoading ? (
@@ -1121,17 +1116,17 @@ export default function DashboardPage() {
               </div>
             )}
 
-            <div className="bg-white rounded-2xl shadow-md p-6 mb-8">
-              <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 mb-6 sm:mb-8">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
                   <Input
                     placeholder={
                       currentRole === "elder"
                         ? "Search volunteers by name, skills, city, or keywords..."
                         : "Search for help requests..."
                     }
-                    className="pl-10 py-6 bg-gray-50 border-gray-100 rounded-xl"
+                    className="pl-9 sm:pl-10 py-5 sm:py-6 bg-gray-50 border-gray-100 rounded-xl text-sm"
                     value={searchTerm}
                     onChange={(e: {
                       target: { value: SetStateAction<string> };
@@ -1140,22 +1135,21 @@ export default function DashboardPage() {
                 </div>
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl px-4"
+                  className="flex items-center gap-2 border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl px-3 sm:px-4 py-2 whitespace-nowrap"
                   onClick={() => {
                     setIsFilterOpen(!isFilterOpen);
-
                     if (isFilterOpen && isShowingMatchResults) {
                       setIsShowingMatchResults(false);
                       setFilteredVolunteers(volunteers);
                     }
                   }}
                 >
-                  <Filter className="h-5 w-5" />
+                  <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
                   Filters
                   {(Object.values(filters.services).some(Boolean) ||
                     Object.values(filters.weekDays).some(Boolean) ||
                     isShowingMatchResults) && (
-                    <Badge className="ml-2 bg-rose-100 text-rose-800 hover:bg-rose-200">
+                    <Badge className="ml-2 bg-rose-100 text-rose-800 hover:bg-rose-200 text-xs">
                       Active
                     </Badge>
                   )}
@@ -1163,7 +1157,7 @@ export default function DashboardPage() {
               </div>
 
               {isFilterOpen && (
-                <div className="mt-6 pt-6 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 animate-in fade-in slide-in-from-top-4 duration-300">
                   <div>
                     <h3 className="font-medium text-gray-900 mb-4">Services</h3>
                     <div className="grid grid-cols-2 gap-3">
@@ -1348,7 +1342,7 @@ export default function DashboardPage() {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                       {filteredVolunteers.map((volunteer, index) => (
                         <Card
                           key={volunteer.id}
@@ -1363,13 +1357,13 @@ export default function DashboardPage() {
                           }`}
                           style={{ animationDelay: `${index * 100}ms` }}
                         >
-                          <CardHeader>
-                            <CardTitle className="text-xl font-semibold flex items-center justify-between">
+                          <CardHeader className="p-4 sm:p-6">
+                            <CardTitle className="text-lg sm:text-xl font-semibold flex items-center justify-between">
                               {volunteer.first_name} {volunteer.last_name}
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="hover:bg-gray-100 rounded-full p-2 -mr-2"
+                                className="hover:bg-gray-100 rounded-full p-1.5 sm:p-2 -mr-1.5 sm:-mr-2"
                                 onClick={() =>
                                   toggleFavorite(
                                     volunteer.id,
@@ -1378,74 +1372,78 @@ export default function DashboardPage() {
                                 }
                               >
                                 {volunteer.isFavorite ? (
-                                  <Heart className="h-5 w-5 text-rose-500 fill-rose-500" />
+                                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-rose-500 fill-rose-500" />
                                 ) : (
-                                  <Heart className="h-5 w-5 text-gray-400" />
+                                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                                 )}
                               </Button>
                             </CardTitle>
                           </CardHeader>
-                          <CardContent className="flex items-center space-x-4">
-                            <Avatar className="h-12 w-12">
-                              <AvatarImage
-                                src={volunteer.profile_image_url || ""}
-                                alt={volunteer.first_name}
-                              />
-                              <AvatarFallback>
-                                {volunteer.first_name[0]}
-                                {volunteer.last_name[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="flex items-center gap-1">
-                                <Star className="h-4 w-4 text-amber-500" />
-                                <span className="text-sm font-medium text-gray-700">
-                                  {volunteer.rating || "0"}
-                                </span>
-                                <span className="text-xs text-gray-500">
-                                  ({volunteer.review_count} reviews)
-                                </span>
+                          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                            <div className="flex items-center space-x-3 sm:space-x-4">
+                              <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
+                                <AvatarImage
+                                  src={volunteer.profile_image_url || ""}
+                                  alt={volunteer.first_name}
+                                />
+                                <AvatarFallback>
+                                  {volunteer.first_name[0]}
+                                  {volunteer.last_name[0]}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="flex items-center gap-1">
+                                  <Star className="h-4 w-4 text-amber-500" />
+                                  <span className="text-sm font-medium text-gray-700">
+                                    {volunteer.rating || "0"}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    ({volunteer.review_count} reviews)
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                  {volunteer.city}
+                                </p>
                               </div>
-                              <p className="text-sm text-gray-500">
-                                {volunteer.city}
-                              </p>
                             </div>
                           </CardContent>
-                          <CardContent>
-                            <p className="text-sm text-gray-700">
+                          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                            <p className="text-sm text-gray-700 line-clamp-3">
                               {volunteer.bio}
                             </p>
-                            <div className="mt-4">
-                              <h4 className="text-sm font-medium text-gray-800">
+                            <div className="mt-3 sm:mt-4">
+                              <h4 className="text-xs sm:text-sm font-medium text-gray-800">
                                 Services:
                               </h4>
-                              <ul className="list-disc list-inside text-sm text-gray-600">
+                              <ul className="list-disc list-inside text-xs sm:text-sm text-gray-600">
                                 {volunteer.services.map((service) => (
                                   <li key={service.id}>{service.name}</li>
                                 ))}
                               </ul>
                             </div>
-                            <div className="mt-4">
-                              <h4 className="text-sm font-medium text-gray-800">
+                            <div className="mt-3 sm:mt-4">
+                              <h4 className="text-xs sm:text-sm font-medium text-gray-800">
                                 Availability:
                               </h4>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-xs sm:text-sm text-gray-600">
                                 {formatAvailability(volunteer)}
                               </p>
                             </div>
                           </CardContent>
-                          <CardFooter className="flex justify-between items-center">
+                          <CardFooter className="flex justify-between items-center p-4 sm:p-6">
                             <Button
                               variant="secondary"
                               size="sm"
+                              className="text-xs sm:text-sm px-2 sm:px-3 py-1 h-8 sm:h-9"
                               onClick={() => openReviewsModal(volunteer)}
                             >
-                              <MessageCircle className="w-4 h-4 mr-2" />
+                              <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                               Reviews
                             </Button>
                             {currentRole === "elder" && (
                               <Button
                                 size="sm"
+                                className="text-xs sm:text-sm px-2 sm:px-3 py-1 h-8 sm:h-9"
                                 onClick={() => openRequestModal(volunteer)}
                               >
                                 Request Help
@@ -1467,10 +1465,14 @@ export default function DashboardPage() {
         </main>
       </div>
       <Dialog open={showReviewsModal} onOpenChange={setShowReviewsModal}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="w-[95vw] max-w-[425px] p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>Volunteer Reviews</DialogTitle>
-            <DialogDescription>See what others are saying.</DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">
+              Volunteer Reviews
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              See what others are saying.
+            </DialogDescription>
           </DialogHeader>
           {selectedVolunteer && (
             <div className="flex items-center space-x-4 mb-4">
@@ -1575,10 +1577,12 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
       <Dialog open={showRequestModal} onOpenChange={setShowRequestModal}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="w-[95vw] max-w-[425px] p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>Request Help</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">
+              Request Help
+            </DialogTitle>
+            <DialogDescription className="text-sm">
               Request help from this volunteer.
             </DialogDescription>
           </DialogHeader>

@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import type React from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "../lib/utils";
 import {
@@ -12,13 +14,54 @@ import {
   Star,
 } from "lucide-react";
 import { Button } from "./ui/button";
+import { useMediaQuery } from "../hooks/use-media-query";
 
 export default function Sidebar() {
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
+  // Handle hover events
+  const handleMouseEnter = () => {
+    if (isDesktop && !isPinned) {
+      setIsOpen(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (isDesktop && !isPinned) {
+      setIsOpen(false);
+    }
+  };
+
+  // Toggle pinned state
+  const togglePin = () => {
+    setIsPinned(!isPinned);
+    setIsOpen(!isPinned);
+  };
+
+  // Initialize sidebar state
   useEffect(() => {
+    const updateSidebarState = () => {
+      if (!isDesktop) {
+        setIsOpen(false);
+        setIsPinned(false);
+      } else {
+        setIsOpen(false); // Default to closed on desktop for hover functionality
+        setIsPinned(false);
+      }
+    };
+
+    updateSidebarState();
+  }, [isDesktop]);
+
+  // Fetch unread notifications
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
     const fetchUnreadCount = async () => {
       try {
         const token = localStorage.getItem("authToken");
@@ -50,7 +93,7 @@ export default function Sidebar() {
     fetchUnreadCount();
 
     //  to refresh the count every minute
-    const interval = setInterval(fetchUnreadCount, 60000);
+    interval = setInterval(fetchUnreadCount, 60000);
 
     return () => clearInterval(interval);
   }, []);
@@ -113,96 +156,157 @@ export default function Sidebar() {
   }
 
   const toggleSidebar = () => {
-    setIsOpen(!isOpen);
+    if (!isDesktop) {
+      setIsOpen(!isOpen);
+    } else {
+      togglePin();
+    }
   };
 
+  const handleLinkClick = () => {
+    if (!isDesktop) {
+      setIsOpen(false);
+    }
+  };
+
+  // Add keyboard support for toggling sidebar
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape" && isOpen && !isDesktop) {
+      setIsOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown as any);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown as any);
+    };
+  }, [isOpen, isDesktop]);
+
   return (
-    <aside
-      className={cn(
-        "bg-white border-r border-gray-100 h-screen transition-all duration-300 overflow-y-auto fixed left-0 top-0 z-30",
-        isOpen ? "w-64" : "w-20"
+    <>
+      {!isDesktop && isOpen && (
+        <div
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-20"
+          onClick={toggleSidebar}
+          aria-hidden="true"
+        />
       )}
-    >
-      <div className="flex flex-col h-full py-6">
-        <div className="px-4 mb-8 flex items-center justify-between">
-          {isOpen ? (
-            <>
-              <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
+      <aside
+        ref={sidebarRef}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className={cn(
+          "bg-white border-r border-gray-100 h-screen transition-all duration-300 overflow-y-auto fixed left-0 top-0 z-30",
+          isOpen ? "w-56 sm:w-64" : "w-16 sm:w-20"
+        )}
+      >
+        <div className="flex flex-col h-full py-4 sm:py-6">
+          <div className="px-3 sm:px-4 mb-6 sm:mb-8 flex items-center justify-between">
+            {isOpen ? (
+              <>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                  Menu
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleSidebar}
+                  className="text-gray-500 hover:text-rose-700"
+                  aria-label={isPinned ? "Unpin sidebar" : "Pin sidebar"}
+                >
+                  <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
+                  {isPinned && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
+                  )}
+                </Button>
+              </>
+            ) : (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleSidebar}
-                className="text-gray-500 hover:text-rose-700"
+                className="mx-auto text-gray-500 hover:text-rose-700"
+                aria-label="Expand sidebar"
               >
-                <Menu className="h-5 w-5" />
+                <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
-            </>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleSidebar}
-              className="mx-auto text-gray-500 hover:text-rose-700"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          )}
+            )}
+          </div>
+
+          <nav className="space-y-1 px-2 sm:px-3 flex-1">
+            {sidebarLinks.map((link) => {
+              const isActive = location.pathname === link.href;
+
+              return (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  onClick={handleLinkClick}
+                  className={cn(
+                    "flex items-center px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm rounded-lg transition-colors relative",
+                    isActive
+                      ? "bg-rose-50 text-rose-700"
+                      : "text-gray-600 hover:text-rose-700 hover:bg-gray-50",
+                    !isOpen && "justify-center"
+                  )}
+                >
+                  <link.icon
+                    className={cn(
+                      "h-4 w-4 sm:h-5 sm:w-5",
+                      isOpen && "mr-2 sm:mr-3"
+                    )}
+                  />
+                  {isOpen && (
+                    <span className="flex-1 text-xs sm:text-sm">
+                      {link.title}
+                    </span>
+                  )}
+                  {isOpen && link.badge && (
+                    <span className="ml-auto bg-rose-500 text-white text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full">
+                      {link.badge}
+                    </span>
+                  )}
+                  {!isOpen && link.badge && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="mt-auto space-y-1 px-2 sm:px-3">
+            {bottomLinks.map((link) => {
+              const isActive = location.pathname === link.href;
+
+              return (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  onClick={handleLinkClick}
+                  className={cn(
+                    "flex items-center px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm rounded-lg transition-colors",
+                    isActive
+                      ? "bg-rose-50 text-rose-700"
+                      : "text-gray-600 hover:text-rose-700 hover:bg-gray-50",
+                    !isOpen && "justify-center"
+                  )}
+                >
+                  <link.icon
+                    className={cn(
+                      "h-4 w-4 sm:h-5 sm:w-5",
+                      isOpen && "mr-2 sm:mr-3"
+                    )}
+                  />
+                  {isOpen && (
+                    <span className="text-xs sm:text-sm">{link.title}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
         </div>
-
-        <nav className="space-y-1 px-3 flex-1">
-          {sidebarLinks.map((link) => {
-            const isActive = location.pathname === link.href;
-
-            return (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={cn(
-                  "flex items-center px-3 py-3 text-sm rounded-lg transition-colors relative",
-                  isActive
-                    ? "bg-rose-50 text-rose-700"
-                    : "text-gray-600 hover:text-rose-700 hover:bg-gray-50",
-                  !isOpen && "justify-center"
-                )}
-              >
-                <link.icon className={cn("h-5 w-5", isOpen && "mr-3")} />
-                {isOpen && <span className="flex-1">{link.title}</span>}
-                {isOpen && link.badge && (
-                  <span className="ml-auto bg-rose-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
-                    {link.badge}
-                  </span>
-                )}
-                {!isOpen && link.badge && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="mt-auto space-y-1 px-3">
-          {bottomLinks.map((link) => {
-            const isActive = location.pathname === link.href;
-
-            return (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={cn(
-                  "flex items-center px-3 py-3 text-sm rounded-lg transition-colors",
-                  isActive
-                    ? "bg-rose-50 text-rose-700"
-                    : "text-gray-600 hover:text-rose-700 hover:bg-gray-50",
-                  !isOpen && "justify-center"
-                )}
-              >
-                <link.icon className={cn("h-5 w-5", isOpen && "mr-3")} />
-                {isOpen && <span>{link.title}</span>}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

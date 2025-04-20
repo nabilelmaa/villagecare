@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "./ui/button";
@@ -22,7 +21,7 @@ export default function Header() {
   const { userData, currentRole } = useUserData();
   const { logout, isAuthenticated } = useAuth();
 
-  // checking if we're on auth pages (login/register)
+  // check if we're on auth pages (login/register)
   const isAuthPage =
     location.pathname === "/auth/login" ||
     location.pathname === "/auth/register";
@@ -97,13 +96,13 @@ export default function Header() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-64 p-0 overflow-hidden shadow-lg rounded-lg border border-gray-100"
+        className="w-56 sm:w-64 p-0 overflow-hidden shadow-lg rounded-lg border border-gray-100"
         align="end"
         forceMount
       >
-        <div className="bg-gradient-to-r from-rose-50 to-rose-100 p-4">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12 border-2 border-white shadow-md">
+        <div className="bg-gradient-to-r from-rose-50 to-rose-100 p-3 sm:p-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-white shadow-md">
               <AvatarImage
                 src={userData?.profile_image_url || "/placeholder.svg"}
                 alt={userData?.first_name}
@@ -115,10 +114,10 @@ export default function Header() {
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <p className="font-semibold text-gray-800">
+              <p className="font-semibold text-sm sm:text-base text-gray-800">
                 {userData?.first_name} {userData?.last_name}
               </p>
-              <p className="text-xs text-gray-500 truncate max-w-[160px]">
+              <p className="text-xs text-gray-500 truncate max-w-[120px] sm:max-w-[160px]">
                 {userData?.email}
               </p>
               <div className="flex items-center mt-1">
@@ -130,7 +129,6 @@ export default function Header() {
         </div>
         <DropdownMenuSeparator />
 
-        {/* Role switcher in dropdown */}
         <div className="px-2 py-2">
           <RoleSwitcher variant="compact" />
         </div>
@@ -192,9 +190,9 @@ export default function Header() {
                 <img
                   src="/vite.svg"
                   alt="VillageCare Logo"
-                  className="h-8 w-8"
+                  className="h-7 w-7 sm:h-8 sm:w-8"
                 />
-                <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#EC2F4B] to-[#EAAFC8]">
+                <span className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#EC2F4B] to-[#EAAFC8]">
                   VillageCare
                 </span>
               </a>
@@ -233,10 +231,9 @@ export default function Header() {
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-rose-500 transition-all duration-300 group-hover:w-full"></span>
               </a>
             </nav>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {isAuthenticated ? (
-                <div className="flex items-center space-x-4">
-                  {/* Role indicator badge */}
+                <div className="flex items-center space-x-2 sm:space-x-4">
                   <Badge
                     className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 ${
                       currentRole === "elder"
@@ -264,13 +261,13 @@ export default function Header() {
                   <Link to="/auth/login">
                     <Button
                       variant="outline"
-                      className="border-rose-200 text-rose-700 hover:bg-rose-50"
+                      className="border-rose-200 text-rose-700 hover:bg-rose-50 text-sm sm:text-base px-2 sm:px-4"
                     >
                       Log in
                     </Button>
                   </Link>
                   <Link to="/auth/register">
-                    <Button className="bg-rose-600 hover:bg-rose-700 text-white">
+                    <Button className="bg-rose-600 hover:bg-rose-700 text-white text-sm sm:text-base px-2 sm:px-4">
                       Sign up
                     </Button>
                   </Link>
@@ -286,24 +283,23 @@ export default function Header() {
   if (isDashboardPage) {
     return (
       <header className="sticky top-0 z-40 w-full bg-white border-b border-gray-100 shadow-sm">
-        <div className="px-4 sm:px-6 lg:px-8">
+        <div className="px-3 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center ml-16 sm:ml-20">
+            <div className="flex items-center ml-12 sm:ml-16 md:ml-20">
               <Link to="/" className="flex items-center space-x-2">
                 <img
                   src="/vite.svg"
                   alt="VillageCare Logo"
-                  className="h-8 w-8"
+                  className="h-7 w-7 sm:h-8 sm:w-8"
                 />
-                <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#EC2F4B] to-[#EAAFC8]">
+                <span className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#EC2F4B] to-[#EAAFC8]">
                   VillageCare
                 </span>
               </Link>
             </div>
-            <div className="flex items-center space-x-4">
-              {/* Role indicator badge */}
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Badge
-                className={`flex items-center gap-1.5 px-3 py-1.5 ${
+                className={`hidden xs:flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm ${
                   currentRole === "elder"
                     ? "bg-blue-100 text-blue-800 hover:bg-blue-100"
                     : "bg-rose-100 text-rose-800 hover:bg-rose-100"
@@ -311,12 +307,12 @@ export default function Header() {
               >
                 {currentRole === "elder" ? (
                   <>
-                    <UserCog className="h-3.5 w-3.5" />
+                    <UserCog className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     <span>Elder Mode</span>
                   </>
                 ) : (
                   <>
-                    <Heart className="h-3.5 w-3.5" />
+                    <Heart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     <span>Volunteer Mode</span>
                   </>
                 )}

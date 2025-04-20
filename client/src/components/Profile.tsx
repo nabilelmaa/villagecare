@@ -491,7 +491,6 @@ export default function ProfilePage() {
       }
 
       showToast("Profile updated successfully", "success");
-
     } catch (error) {
       console.error("Error updating profile:", error);
       showToast(
@@ -621,30 +620,29 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-
-      <div className="mb-8">
+    <div className="container mx-auto px-4 py-6 sm:py-8 max-w-6xl">
+      <div className="mb-6 sm:mb-8">
         <RoleSwitcher />
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8">
-
-        <div className="md:w-1/3">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        <div className="lg:w-1/3">
           <Card className="border-0 shadow-lg rounded-2xl overflow-hidden">
             <div
-              className={`h-32 relative ${
+              className={`h-24 sm:h-32 relative ${
                 currentRole === "elder"
                   ? "bg-gradient-to-r from-blue-500 to-blue-400"
                   : "bg-gradient-to-r from-rose-500 to-rose-400"
               }`}
             ></div>
-            <div className="px-6 pb-6">
+            <div className="px-4 sm:px-6 pb-6">
               <div className="flex justify-center">
-                <Avatar className="h-24 w-24 border-4 border-white shadow-lg -mt-12">
+                <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-white shadow-lg -mt-10 sm:-mt-12">
                   <AvatarImage
                     src={
                       userData?.profile_image_url ||
                       "/placeholder.svg?height=100&width=100" ||
+                      "/placeholder.svg" ||
                       "/placeholder.svg"
                     }
                     alt={userData?.first_name}
@@ -660,12 +658,12 @@ export default function ProfilePage() {
                   </AvatarFallback>
                 </Avatar>
               </div>
-              <div className="text-center mt-4">
-                <h2 className="text-xl font-bold">
+              <div className="text-center mt-3 sm:mt-4">
+                <h2 className="text-lg sm:text-xl font-bold">
                   {userData?.first_name} {userData?.last_name}
                 </h2>
-                <p className="text-gray-500 flex items-center justify-center mt-1">
-                  <MapPin className="h-4 w-4 mr-1" />
+                <p className="text-sm text-gray-500 flex items-center justify-center mt-1">
+                  <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                   {userData?.city
                     ? userData.city.charAt(0).toUpperCase() +
                       userData.city.slice(1)
@@ -673,7 +671,7 @@ export default function ProfilePage() {
                 </p>
                 <div className="flex justify-center mt-2">
                   <Badge
-                    className={`${
+                    className={`text-xs sm:text-sm ${
                       currentRole === "elder"
                         ? "bg-blue-100 text-blue-800 border border-blue-200"
                         : "bg-rose-100 text-rose-800 border border-rose-200"
@@ -684,30 +682,36 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="mt-6 space-y-4">
+              <div className="mt-5 sm:mt-6 space-y-3 sm:space-y-4">
                 <div className="flex items-start">
-                  <Phone className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
+                  <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mr-2 sm:mr-3 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Phone</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm font-medium text-gray-900">
+                      Phone
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-500">
                       {userData?.phone_number || "Not provided"}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <Mail className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
+                  <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mr-2 sm:mr-3 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Email</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm font-medium text-gray-900">
+                      Email
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-500">
                       {userData?.email || "Not provided"}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <MapPin className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
+                  <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mr-2 sm:mr-3 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Address</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm font-medium text-gray-900">
+                      Address
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-500">
                       {userData?.city
                         ? userData.city.charAt(0).toUpperCase() +
                           userData.city.slice(1)
@@ -716,12 +720,12 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <User className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
+                  <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mr-2 sm:mr-3 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-xs sm:text-sm font-medium text-gray-900">
                       Member Since
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-500">
                       {userData?.created_at
                         ? new Date(userData.created_at).toLocaleDateString()
                         : "Unknown"}
@@ -731,13 +735,13 @@ export default function ProfilePage() {
               </div>
 
               {currentRole === "volunteer" && (
-                <div className="mt-6">
+                <div className="mt-5 sm:mt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-gray-900">
+                    <h3 className="text-xs sm:text-sm font-medium text-gray-900">
                       Services Offered
                     </h3>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     {isLoadingServices ? (
                       <div className="flex items-center text-gray-500">
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -773,8 +777,7 @@ export default function ProfilePage() {
                           ? "text-blue-600"
                           : "text-rose-600"
                       }`}
-                    >
-                    </p>
+                    ></p>
                   </div>
                   {currentRole === "volunteer" && (
                     <div>
@@ -796,16 +799,16 @@ export default function ProfilePage() {
         </div>
 
         {/* Profile Tabs */}
-        <div className="md:w-2/3">
+        <div className="lg:w-2/3">
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList className="grid grid-cols-4 mb-8">
+            <TabsList className="grid grid-cols-3 sm:grid-cols-4 mb-6 sm:mb-8">
               <TabsTrigger
                 value="personal"
-                className={`data-[state=active]:${
+                className={`text-xs sm:text-sm py-1.5 sm:py-2 data-[state=active]:${
                   currentRole === "elder"
                     ? "bg-blue-50 text-blue-700"
                     : "bg-rose-50 text-rose-700"
@@ -817,7 +820,7 @@ export default function ProfilePage() {
               {currentRole === "volunteer" && (
                 <TabsTrigger
                   value="availability"
-                  className="data-[state=active]:bg-rose-50 data-[state=active]:text-rose-700"
+                  className="text-xs sm:text-sm py-1.5 sm:py-2 data-[state=active]:bg-rose-50 data-[state=active]:text-rose-700"
                 >
                   Availability
                 </TabsTrigger>
@@ -826,7 +829,7 @@ export default function ProfilePage() {
               {currentRole === "elder" && (
                 <TabsTrigger
                   value="preferences"
-                  className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+                  className="text-xs sm:text-sm py-1.5 sm:py-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
                 >
                   Preferences
                 </TabsTrigger>
@@ -834,7 +837,7 @@ export default function ProfilePage() {
 
               <TabsTrigger
                 value="security"
-                className={`data-[state=active]:${
+                className={`text-xs sm:text-sm py-1.5 sm:py-2 data-[state=active]:${
                   currentRole === "elder"
                     ? "bg-blue-50 text-blue-700"
                     : "bg-rose-50 text-rose-700"
@@ -846,55 +849,71 @@ export default function ProfilePage() {
 
             <TabsContent value="personal">
               <Card className="border-0 shadow-md rounded-xl">
-                <CardHeader>
-                  <CardTitle>Personal Information</CardTitle>
-                  <CardDescription>
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="text-lg sm:text-xl">
+                    Personal Information
+                  </CardTitle>
+                  <CardDescription className="text-sm">
                     Update your personal details here.
                   </CardDescription>
                 </CardHeader>
 
-                <CardContent className="space-y-6">
+                <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 space-y-5 sm:space-y-6">
                   <form onSubmit={handleUpdateProfile}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="first_name">First Name</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="first_name" className="text-sm">
+                          First Name
+                        </Label>
                         <Input
                           id="first_name"
                           name="first_name"
                           value={formData.first_name}
                           onChange={handleInputChange}
+                          className="text-sm"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="last_name">Last Name</Label>
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="last_name" className="text-sm">
+                          Last Name
+                        </Label>
                         <Input
                           id="last_name"
                           name="last_name"
                           value={formData.last_name}
                           onChange={handleInputChange}
+                          className="text-sm"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="email" className="text-sm">
+                          Email
+                        </Label>
                         <Input
                           id="email"
                           name="email"
                           type="email"
                           value={formData.email}
                           onChange={handleInputChange}
+                          className="text-sm"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="phone_number">Phone</Label>
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="phone_number" className="text-sm">
+                          Phone
+                        </Label>
                         <Input
                           id="phone_number"
                           name="phone_number"
                           value={formData.phone_number}
                           onChange={handleInputChange}
+                          className="text-sm"
                         />
                       </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="city">City</Label>
+                      <div className="space-y-1.5 sm:space-y-2 md:col-span-2">
+                        <Label htmlFor="city" className="text-sm">
+                          City
+                        </Label>
                         <Input
                           id="city"
                           name="city"
@@ -903,15 +922,18 @@ export default function ProfilePage() {
                             formData.city.slice(1)
                           }
                           onChange={handleInputChange}
+                          className="text-sm"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="gender">Gender</Label>
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="gender" className="text-sm">
+                          Gender
+                        </Label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="outline"
-                              className="w-full justify-between"
+                              className="w-full justify-between text-sm"
                               id="gender"
                             >
                               {formData.gender
@@ -948,23 +970,26 @@ export default function ProfilePage() {
                         </DropdownMenu>
                       </div>
                     </div>
-                    <div className="space-y-2 mt-6">
-                      <Label htmlFor="bio">Bio</Label>
+                    <div className="space-y-1.5 sm:space-y-2 mt-5 sm:mt-6">
+                      <Label htmlFor="bio" className="text-sm">
+                        Bio
+                      </Label>
                       <Textarea
                         id="bio"
                         name="bio"
                         rows={4}
                         value={formData.bio}
                         onChange={handleInputChange}
+                        className="text-sm"
                       />
                     </div>
-                    <div className="flex justify-end mt-6">
+                    <div className="flex justify-end mt-5 sm:mt-6">
                       <Button
                         type="submit"
                         className={
                           currentRole === "elder"
-                            ? "bg-blue-600 hover:bg-blue-700"
-                            : "bg-rose-600 hover:bg-rose-700"
+                            ? "bg-blue-600 hover:bg-blue-700 text-sm"
+                            : "bg-rose-600 hover:bg-rose-700 text-sm"
                         }
                         disabled={isUpdatingProfile}
                       >
@@ -983,7 +1008,7 @@ export default function ProfilePage() {
                   {currentRole === "volunteer" && (
                     <>
                       <div className="border-t border-gray-100 my-6 pt-6">
-                        <div className="space-y-2">
+                        <div className="space-y-1.5 sm:space-y-2">
                           <Label className="text-lg font-medium">
                             Services You Offer
                           </Label>
@@ -1026,7 +1051,7 @@ export default function ProfilePage() {
                           <Button
                             type="button"
                             onClick={handleUpdateServices}
-                            className="bg-rose-600 hover:bg-rose-700"
+                            className="bg-rose-600 hover:bg-rose-700 text-sm"
                             disabled={isUpdatingServices || isLoadingServices}
                           >
                             {isUpdatingServices ? (
@@ -1050,13 +1075,15 @@ export default function ProfilePage() {
             {currentRole === "volunteer" && (
               <TabsContent value="availability">
                 <Card className="border-0 shadow-md rounded-xl">
-                  <CardHeader>
-                    <CardTitle>Availability</CardTitle>
-                    <CardDescription>
+                  <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-lg sm:text-xl">
+                      Availability
+                    </CardTitle>
+                    <CardDescription className="text-sm">
                       Set your weekly availability for volunteer work.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 sm:p-6">
                     {isLoadingAvailability ? (
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="h-6 w-6 mr-2 animate-spin text-rose-500" />
@@ -1072,7 +1099,7 @@ export default function ProfilePage() {
                             <h3 className="font-medium text-gray-900 mb-3">
                               {day.label}
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                               {timeSlots.map((slot) => (
                                 <div
                                   key={slot.id}
@@ -1091,9 +1118,9 @@ export default function ProfilePage() {
                                   />
                                   <Label
                                     htmlFor={`${day.id}-${slot.id}`}
-                                    className="text-sm flex items-center"
+                                    className="text-xs sm:text-sm flex items-center"
                                   >
-                                    <Clock className="h-4 w-4 mr-1.5 text-gray-400" />
+                                    <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-gray-400" />
                                     {slot.label}
                                   </Label>
                                 </div>
@@ -1104,9 +1131,9 @@ export default function ProfilePage() {
                       </div>
                     )}
                   </CardContent>
-                  <CardFooter className="flex justify-end">
+                  <CardFooter className="flex justify-end p-4 sm:p-6">
                     <Button
-                      className="bg-rose-600 hover:bg-rose-700"
+                      className="bg-rose-600 hover:bg-rose-700 text-sm"
                       onClick={handleUpdateAvailability}
                       disabled={isUpdatingAvailability || isLoadingAvailability}
                     >
@@ -1127,14 +1154,16 @@ export default function ProfilePage() {
             {currentRole === "elder" && (
               <TabsContent value="preferences">
                 <Card className="border-0 shadow-md rounded-xl">
-                  <CardHeader>
-                    <CardTitle>Service Preferences</CardTitle>
-                    <CardDescription>
+                  <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-lg sm:text-xl">
+                      Service Preferences
+                    </CardTitle>
+                    <CardDescription className="text-sm">
                       Select the services you need and your preferred
                       availability.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 sm:p-6">
                     <div className="space-y-6">
                       <div className="space-y-4">
                         <h3 className="text-lg font-medium">
@@ -1199,7 +1228,7 @@ export default function ProfilePage() {
                                 <h3 className="font-medium text-gray-900 mb-3">
                                   {day.label}
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                                   {timeSlots.map((slot) => (
                                     <div
                                       key={slot.id}
@@ -1218,9 +1247,9 @@ export default function ProfilePage() {
                                       />
                                       <Label
                                         htmlFor={`${day.id}-${slot.id}`}
-                                        className="text-sm flex items-center"
+                                        className="text-xs sm:text-sm flex items-center"
                                       >
-                                        <Clock className="h-4 w-4 mr-1.5 text-gray-400" />
+                                        <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-gray-400" />
                                         {slot.label}
                                       </Label>
                                     </div>
@@ -1233,9 +1262,9 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   </CardContent>
-                  <CardFooter className="flex justify-end">
+                  <CardFooter className="flex justify-end p-4 sm:p-6">
                     <Button
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-blue-600 hover:bg-blue-700 text-sm"
                       onClick={handleUpdateElderPreferences}
                       disabled={
                         isUpdatingServices ||
@@ -1260,17 +1289,21 @@ export default function ProfilePage() {
 
             <TabsContent value="security">
               <Card className="border-0 shadow-md rounded-xl">
-                <CardHeader>
-                  <CardTitle>Security Settings</CardTitle>
-                  <CardDescription>
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="text-lg sm:text-xl">
+                    Security Settings
+                  </CardTitle>
+                  <CardDescription className="text-sm">
                     Update your password and security preferences.
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6">
                   <form onSubmit={handleUpdatePassword}>
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="oldPassword">Current Password</Label>
+                        <Label htmlFor="oldPassword" className="text-sm">
+                          Current Password
+                        </Label>
                         <div className="relative">
                           <Input
                             id="oldPassword"
@@ -1281,7 +1314,9 @@ export default function ProfilePage() {
                             value={passwordData.oldPassword}
                             onChange={handlePasswordChange}
                             className={
-                              passwordErrors.oldPassword ? "border-red-500" : ""
+                              passwordErrors.oldPassword
+                                ? "border-red-500"
+                                : "text-sm"
                             }
                           />
                           <button
@@ -1306,7 +1341,9 @@ export default function ProfilePage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="newPassword">New Password</Label>
+                        <Label htmlFor="newPassword" className="text-sm">
+                          New Password
+                        </Label>
                         <div className="relative">
                           <Input
                             id="newPassword"
@@ -1317,7 +1354,9 @@ export default function ProfilePage() {
                             value={passwordData.newPassword}
                             onChange={handlePasswordChange}
                             className={
-                              passwordErrors.newPassword ? "border-red-500" : ""
+                              passwordErrors.newPassword
+                                ? "border-red-500"
+                                : "text-sm"
                             }
                           />
                           <button
@@ -1342,7 +1381,7 @@ export default function ProfilePage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">
+                        <Label htmlFor="confirmPassword" className="text-sm">
                           Confirm New Password
                         </Label>
                         <div className="relative">
@@ -1359,7 +1398,7 @@ export default function ProfilePage() {
                             className={
                               passwordErrors.confirmPassword
                                 ? "border-red-500"
-                                : ""
+                                : "text-sm"
                             }
                           />
                           <button
@@ -1389,8 +1428,8 @@ export default function ProfilePage() {
                         type="submit"
                         className={
                           currentRole === "elder"
-                            ? "bg-blue-600 hover:bg-blue-700"
-                            : "bg-rose-600 hover:bg-rose-700"
+                            ? "bg-blue-600 hover:bg-blue-700 text-sm"
+                            : "bg-rose-600 hover:bg-rose-700 text-sm"
                         }
                         disabled={isUpdatingPassword}
                       >
