@@ -54,13 +54,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
   };
 
-  const login = (token: string) => {
+  const login = async (token: string) => {
     localStorage.setItem("authToken", token);
-    setIsAuthenticated(true);
+
+    try {
+      const res = await fetch("http://localhost:5000/api/user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch user");
+
+      const user = await res.json();
+
+      if (user.role) {
+        localStorage.setItem("userRole", user.role);
+      }
+
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error("Failed to fetch user role on login:", error);
+      logout();
+    }
   };
 
   const logout = () => {
     localStorage.removeItem("authToken");
+    localStorage.removeItem("userRole");
     setIsAuthenticated(false);
   };
 

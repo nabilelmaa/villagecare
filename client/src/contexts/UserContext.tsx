@@ -33,7 +33,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const [currentRole, setCurrentRole] = useState<UserRole>(() => {
     const savedRole = localStorage.getItem("userRole");
-    return (savedRole as UserRole) || "elder";
+    return savedRole === "elder" || savedRole === "volunteer"
+      ? savedRole
+      : "elder";
   });
 
   useEffect(() => {

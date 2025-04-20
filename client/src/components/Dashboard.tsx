@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, type SetStateAction } from "react";
 import { Button } from "../components/ui/button";
 import {
@@ -218,6 +220,11 @@ export default function DashboardPage() {
   const checkFavoriteStatus = async (
     volunteers: Volunteer[]
   ): Promise<Volunteer[]> => {
+    // If volunteers array is empty, return it immediately
+    if (!volunteers || volunteers.length === 0) {
+      return [];
+    }
+
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
@@ -229,23 +236,31 @@ export default function DashboardPage() {
 
       for (let i = 0; i < volunteersWithFavoriteStatus.length; i++) {
         const volunteer = volunteersWithFavoriteStatus[i];
-        const response = await fetch(
-          `http://localhost:5000/api/favorites/${volunteer.id}/check`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        try {
+          const response = await fetch(
+            `http://localhost:5000/api/favorites/${volunteer.id}/check`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
 
-        if (response.ok) {
-          const data = await response.json();
-          volunteersWithFavoriteStatus[i] = {
-            ...volunteer,
-            isFavorite: data.isFavorite,
-          };
+          if (response.ok) {
+            const data = await response.json();
+            volunteersWithFavoriteStatus[i] = {
+              ...volunteer,
+              isFavorite: data.isFavorite,
+            };
+          }
+        } catch (error) {
+          console.warn(
+            `Failed to check favorite status for volunteer ${volunteer.id}:`,
+            error
+          );
+          // Continue with other volunteers even if one fails
         }
       }
 
@@ -458,33 +473,73 @@ export default function DashboardPage() {
         const token = localStorage.getItem("authToken");
         if (!token) {
           showToast("Please log in again", "error");
+          setIsLoading(false);
           return;
         }
-        const volunteersResponse = await fetch(
-          "http://localhost:5000/api/volunteers",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        if (!volunteersResponse.ok) {
-          throw new Error("Failed to fetch volunteers");
-        }
-        const volunteersData = await volunteersResponse.json();
 
-        const volunteersWithFavoriteStatus = await checkFavoriteStatus(
-          volunteersData.volunteers
-        );
-        if (isMounted) {
-          setVolunteers(volunteersWithFavoriteStatus);
-          setFilteredVolunteers(volunteersWithFavoriteStatus);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+        try {
+          const volunteersResponse = await fetch(
+            "http://localhost:5000/api/volunteers",
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              signal: controller.signal,
+            }
+          );
+
+          clearTimeout(timeoutId);
+
+          if (!volunteersResponse.ok) {
+            const errorData = await volunteersResponse.json().catch(() => ({}));
+            throw new Error(
+              errorData.message ||
+                `Server responded with status: ${volunteersResponse.status}`
+            );
+          }
+
+          const volunteersData = await volunteersResponse.json();
+
+          const volunteersArray = volunteersData.volunteers || [];
+
+          if (isMounted) {
+            // Even if there are no volunteers, we should still set empty arrays rather than failing
+            const volunteersWithFavoriteStatus = await checkFavoriteStatus(
+              volunteersArray
+            );
+            setVolunteers(volunteersWithFavoriteStatus);
+            setFilteredVolunteers(volunteersWithFavoriteStatus);
+          }
+        } catch (fetchError) {
+          if (fetchError instanceof Error && fetchError.name === "AbortError") {
+            console.error("Request timed out");
+            if (isMounted) {
+              showToast(
+                "Request timed out. Please check your connection and try again.",
+                "error"
+              );
+            }
+          } else {
+            throw fetchError;
+          }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        showToast("Failed to load dashboard data", "error");
+        if (isMounted) {
+          setVolunteers([]);
+          setFilteredVolunteers([]);
+          showToast(
+            `Failed to load dashboard data: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+            "error"
+          );
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
