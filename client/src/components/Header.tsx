@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "./ui/button";
@@ -9,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { User, Settings, LogOut, Bell, Heart, UserCog } from "lucide-react";
+import { User, LogOut, Bell, Heart, UserCog } from "lucide-react";
 import { useUserData } from "../contexts/UserContext";
 import { useAuth } from "../contexts/AuthContext";
 import RoleSwitcher from "./RoleSwitcher";
@@ -38,7 +40,6 @@ export default function Header() {
   // checking if we're on the landing page
   const isLandingPage = location.pathname === "/";
 
-  // Scroll event listener for landing page header
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
@@ -57,7 +58,6 @@ export default function Header() {
     };
   }, [isLandingPage]);
 
-  // Smooth scroll function for landing page navigation
   const scrollToSection =
     (sectionId: string) => (e: { preventDefault: () => void }) => {
       e.preventDefault();
@@ -75,15 +75,14 @@ export default function Header() {
     return null;
   }
 
-  // Enhanced user avatar dropdown component
   const UserDropdown = () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative p-0 h-10 w-10 rounded-full overflow-hidden ring-2 ring-offset-2 ring-offset-white ring-rose-100 hover:ring-rose-200 transition-all duration-200"
+          className="relative p-0 h-10 w-10 rounded-full overflow-hidden ring-2 ring-offset-2 ring-offset-white ring-rose-100 hover:ring-rose-200 transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-rose-300"
         >
-          <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+          <Avatar className="h-10 w-10 border-2 border-white shadow-md">
             <AvatarImage
               src={userData?.profile_image_url || "/placeholder.svg"}
               alt={userData?.first_name}
@@ -94,64 +93,81 @@ export default function Header() {
               {userData?.last_name?.[0]}
             </AvatarFallback>
           </Avatar>
-          <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-400 border-2 border-white"></span>
+          <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-400 border-2 border-white ring-1 ring-green-200"></span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <div className="flex items-center justify-start gap-3 p-3">
-          <Avatar className="h-10 w-10 border border-gray-200">
-            <AvatarImage
-              src={userData?.profile_image_url || "/placeholder.svg"}
-              alt={userData?.first_name}
-            />
-            <AvatarFallback className="bg-gradient-to-br from-rose-400 to-rose-600 text-white font-medium">
-              {userData?.first_name?.[0]}
-              {userData?.last_name?.[0]}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col space-y-0.5 leading-none">
-            <p className="font-medium text-sm">
-              {userData?.first_name} {userData?.last_name}
-            </p>
-            <p className="text-xs text-gray-500 truncate max-w-[160px]">
-              {userData?.email}
-            </p>
+      <DropdownMenuContent
+        className="w-64 p-0 overflow-hidden shadow-lg rounded-lg border border-gray-100"
+        align="end"
+        forceMount
+      >
+        <div className="bg-gradient-to-r from-rose-50 to-rose-100 p-4">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-12 w-12 border-2 border-white shadow-md">
+              <AvatarImage
+                src={userData?.profile_image_url || "/placeholder.svg"}
+                alt={userData?.first_name}
+                className="object-cover"
+              />
+              <AvatarFallback className="bg-gradient-to-br from-rose-400 to-rose-600 text-white font-medium">
+                {userData?.first_name?.[0]}
+                {userData?.last_name?.[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <p className="font-semibold text-gray-800">
+                {userData?.first_name} {userData?.last_name}
+              </p>
+              <p className="text-xs text-gray-500 truncate max-w-[160px]">
+                {userData?.email}
+              </p>
+              <div className="flex items-center mt-1">
+                <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5"></span>
+                <span className="text-xs text-green-700">Online</span>
+              </div>
+            </div>
           </div>
         </div>
         <DropdownMenuSeparator />
 
         {/* Role switcher in dropdown */}
-        <div className="px-2 py-1.5">
+        <div className="px-2 py-2">
           <RoleSwitcher variant="compact" />
         </div>
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem asChild>
-          <Link
-            to="/profile"
-            className="cursor-pointer flex w-full items-center"
+        <div className="p-1">
+          <DropdownMenuItem
+            asChild
+            className="flex items-center p-2 cursor-pointer rounded-md hover:bg-rose-50 transition-colors"
           >
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link
-            to="/settings"
-            className="cursor-pointer flex w-full items-center"
+            <Link to="/profile" className="w-full">
+              <User className="mr-2 h-4 w-4 text-rose-500" />
+              <span>My Profile</span>
+            </Link>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            asChild
+            className="flex items-center p-2 cursor-pointer rounded-md hover:bg-rose-50 transition-colors"
           >
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
-          </Link>
-        </DropdownMenuItem>
+            <Link to="/notifications" className="w-full">
+              <Bell className="mr-2 h-4 w-4 text-rose-500" />
+              <span>Notifications</span>
+            </Link>
+          </DropdownMenuItem>
+        </div>
+
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="cursor-pointer text-rose-700 focus:text-rose-700"
-          onClick={logout}
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
-        </DropdownMenuItem>
+        <div className="p-1">
+          <DropdownMenuItem
+            className="flex items-center p-2 cursor-pointer rounded-md text-rose-700 hover:bg-rose-50 transition-colors"
+            onClick={logout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Log out</span>
+          </DropdownMenuItem>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -332,8 +348,6 @@ export default function Header() {
       </header>
     );
   }
-
-  // Default header for other pages
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-gray-100 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">

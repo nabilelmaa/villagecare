@@ -5,8 +5,10 @@ import {
   useContext,
   type ReactNode,
   useEffect,
+  useCallback,
 } from "react";
 import type { User } from "../types/index";
+import { useToast } from "./ToastContext";
 
 type UserRole = "elder" | "volunteer";
 
@@ -18,6 +20,7 @@ interface UserContextType {
   currentRole: UserRole;
   setCurrentRole: (role: UserRole) => void;
   toggleRole: () => void;
+  fetchUserData: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -26,6 +29,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const [currentRole, setCurrentRole] = useState<UserRole>(() => {
     const savedRole = localStorage.getItem("userRole");
@@ -58,39 +62,49 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const fetchUserData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/user`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserData(data);
+        console.log("User data fetched successfully:", data);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to fetch user data:", errorData);
+        setError(errorData.message || "Failed to fetch user data");
+        showToast("Failed to load user data. Please try again.", "error");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      setError("Error fetching user data");
+      showToast("Network error while loading user data.", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast]);
+
   useEffect(() => {
-    const fetchUserData = async () => {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch(`http://localhost:5000/api/user`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (response.ok) {
-          const data: User = await response.json();
-          setUserData(data);
-          console.log("User data", data);
-        } else {
-          setError("Failed to fetch user data");
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        setError("Error fetching user data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (!userData) {
+    // Only fetch user data on initial load if we have a token
+    const token = localStorage.getItem("authToken");
+    if (token) {
       fetchUserData();
     } else {
       setLoading(false);
     }
-  }, [userData]);
+  }, [fetchUserData]);
 
   const contextValue = {
     userData,
@@ -100,6 +114,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     currentRole,
     setCurrentRole,
     toggleRole,
+    fetchUserData,
   };
 
   return (
@@ -114,70 +129,3 @@ export const useUserData = (): UserContextType => {
   }
   return context;
 };
-
-// import React, {
-//   createContext,
-//   useState,
-//   useContext,
-//   ReactNode,
-//   useEffect,
-// } from "react";
-// import { User } from "../types/index";
-
-// interface UserContextType {
-//   userData: User | null;
-//   setUserData: React.Dispatch<React.SetStateAction<User | null>>;
-//   loading: boolean;
-// }
-
-// const UserContext = createContext<UserContextType | undefined>(undefined);
-
-// export const UserProvider = ({ children }: { children: ReactNode }) => {
-//   const [userData, setUserData] = useState<User | null>(null);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     const fetchUserData = async () => {
-//       const token = localStorage.getItem("authToken");
-//       if (!token) {
-//         setLoading(false);
-//         return;
-//       }
-
-//       try {
-//         const response = await fetch(`http://localhost:5000/api/user`, {
-//           headers: { Authorization: `Bearer ${token}` },
-//         });
-//         if (response.ok) {
-//           const data: User = await response.json();
-//           setUserData(data);
-//           console.log("User data", data);
-//         }
-//       } catch (error) {
-//         console.error("Error fetching user data:", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     if (!userData) {
-//       fetchUserData();
-//     } else {
-//       setLoading(false);
-//     }
-//   }, [userData]);
-
-//   return (
-//     <UserContext.Provider value={{ userData, setUserData, loading }}>
-//       {children}
-//     </UserContext.Provider>
-//   );
-// };
-
-// export const useUserData = (): UserContextType => {
-//   const context = useContext(UserContext);
-//   if (!context) {
-//     throw new Error("useUserData must be used within a UserProvider");
-//   }
-//   return context;
-// };

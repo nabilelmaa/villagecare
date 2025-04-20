@@ -1,7 +1,5 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { data, Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { cn } from "../lib/utils";
 import {
   Home,
@@ -9,9 +7,7 @@ import {
   Calendar,
   User,
   Heart,
-  Settings,
   HelpCircle,
-  ChevronRight,
   Menu,
 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -88,11 +84,6 @@ export default function Sidebar() {
   ];
 
   const bottomLinks = [
-    {
-      title: "Settings",
-      href: "/settings",
-      icon: Settings,
-    },
     {
       title: "Help & Support",
       href: "/help",
@@ -183,25 +174,6 @@ export default function Sidebar() {
         </nav>
 
         <div className="mt-auto space-y-1 px-3">
-          {isOpen && (
-            <div className="bg-rose-50 rounded-lg p-4 mb-4">
-              <div className="flex items-center">
-                <div className="rounded-full bg-rose-100 p-2">
-                  <Heart className="h-4 w-4 text-rose-700" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-rose-800">
-                    Need Help?
-                  </h3>
-                  <p className="text-xs text-rose-700 mt-0.5">
-                    Request assistance
-                  </p>
-                </div>
-                <ChevronRight className="ml-auto h-4 w-4 text-rose-700" />
-              </div>
-            </div>
-          )}
-
           {bottomLinks.map((link) => {
             const isActive = location.pathname === link.href;
 

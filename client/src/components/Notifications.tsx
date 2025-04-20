@@ -162,8 +162,12 @@ const Notifications = () => {
 
       {notifications.length === 0 && !error ? (
         <div className="text-center py-8">
-          <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">No notifications yet</p>
+          <div className="mx-auto w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mb-4">
+            <Bell className="h-8 w-8 text-rose-600" />
+          </div>
+          <p className="text-gray-500 max-w-md mx-auto mb-6">
+            No notifications yet
+          </p>
         </div>
       ) : (
         <div className="space-y-3">

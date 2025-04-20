@@ -138,7 +138,6 @@ export default function DashboardPage() {
     },
   });
 
-  // Reviews state
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(
     null
   );
@@ -151,7 +150,6 @@ export default function DashboardPage() {
   });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-  // Request Help state
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestVolunteer, setRequestVolunteer] = useState<Volunteer | null>(
     null
@@ -178,7 +176,6 @@ export default function DashboardPage() {
   const { showToast } = useToast();
   const [animateCards, setAnimateCards] = useState(false);
 
-  // Function to fetch services from the API
   const fetchServices = async () => {
     setIsLoadingServices(true);
     try {
@@ -210,7 +207,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Function to check if volunteers are favorites
   const checkFavoriteStatus = async (
     volunteers: Volunteer[]
   ): Promise<Volunteer[]> => {
@@ -221,10 +217,8 @@ export default function DashboardPage() {
         return volunteers;
       }
 
-      // Create a copy of volunteers with isFavorite property
       const volunteersWithFavoriteStatus = [...volunteers];
 
-      // Check favorite status for each volunteer
       for (let i = 0; i < volunteersWithFavoriteStatus.length; i++) {
         const volunteer = volunteersWithFavoriteStatus[i];
         const response = await fetch(
@@ -257,7 +251,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Function to toggle favorite status
   const toggleFavorite = async (
     volunteerId: number,
     isCurrentlyFavorite: boolean
@@ -270,7 +263,6 @@ export default function DashboardPage() {
       }
 
       if (isCurrentlyFavorite) {
-        // Remove from favorites
         const response = await fetch(
           `http://localhost:5000/api/favorites/${volunteerId}/remove`,
           {
@@ -284,7 +276,7 @@ export default function DashboardPage() {
 
         if (response.ok) {
           showToast("Removed from favorites", "success");
-          // Update the volunteers state
+
           setVolunteers((prevVolunteers) =>
             prevVolunteers.map((volunteer) =>
               volunteer.id === volunteerId
@@ -299,7 +291,7 @@ export default function DashboardPage() {
                 : volunteer
             )
           );
-          // Also update matched volunteers if any
+
           setMatchedVolunteers((prevVolunteers) =>
             prevVolunteers.map((volunteer) =>
               volunteer.id === volunteerId
@@ -311,7 +303,6 @@ export default function DashboardPage() {
           throw new Error("Failed to remove from favorites");
         }
       } else {
-        // Add to favorites
         const response = await fetch(
           `http://localhost:5000/api/favorites/add`,
           {
@@ -326,7 +317,7 @@ export default function DashboardPage() {
 
         if (response.ok) {
           showToast("Added to favorites", "success");
-          // Update the volunteers state
+
           setVolunteers((prevVolunteers) =>
             prevVolunteers.map((volunteer) =>
               volunteer.id === volunteerId
@@ -341,7 +332,7 @@ export default function DashboardPage() {
                 : volunteer
             )
           );
-          // Also update matched volunteers if any
+
           setMatchedVolunteers((prevVolunteers) =>
             prevVolunteers.map((volunteer) =>
               volunteer.id === volunteerId
@@ -364,7 +355,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Function to open the request help modal
   const openRequestModal = (volunteer: Volunteer) => {
     setRequestVolunteer(volunteer);
     setRequestFormData({
@@ -376,11 +366,10 @@ export default function DashboardPage() {
       volunteer_id: volunteer.id,
     });
     setFormErrors({});
-    fetchServices(); // Fetch services when opening the modal
+    fetchServices();
     setShowRequestModal(true);
   };
 
-  // Function to validate the request form
   const validateRequestForm = (): boolean => {
     const errors: {
       service_id?: string;
@@ -409,7 +398,6 @@ export default function DashboardPage() {
     return Object.keys(errors).length === 0;
   };
 
-  // Function to submit a help request
   const submitHelpRequest = async () => {
     if (!validateRequestForm()) {
       return;
@@ -439,9 +427,6 @@ export default function DashboardPage() {
 
       showToast("Help request submitted successfully", "success");
       setShowRequestModal(false);
-
-      // Refresh requests list
-      // In a real app, you would fetch the updated requests list here
     } catch (error) {
       console.error("Error submitting help request:", error);
       showToast(
@@ -495,7 +480,6 @@ export default function DashboardPage() {
       } finally {
         if (isMounted) {
           setIsLoading(false);
-          // Trigger animation after data is loaded
           setTimeout(() => setAnimateCards(true), 100);
         }
       }
@@ -508,7 +492,6 @@ export default function DashboardPage() {
     };
   }, [showToast]);
 
-  // Function to fetch reviews for a volunteer
   const fetchReviews = async (volunteerId: number) => {
     setIsLoadingReviews(true);
     try {
@@ -543,7 +526,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Function to submit a new review
   const submitReview = async () => {
     if (!selectedVolunteer) return;
 
@@ -579,16 +561,13 @@ export default function DashboardPage() {
 
       showToast("Review submitted successfully", "success");
 
-      // Reset form
       setNewReview({
         rating: 5,
         comment: "",
       });
 
-      // Refresh reviews
       fetchReviews(selectedVolunteer.id);
 
-      // Refresh volunteers to update ratings
       const volunteersResponse = await fetch(
         "http://localhost:5000/api/volunteers",
         {
@@ -618,14 +597,13 @@ export default function DashboardPage() {
     }
   };
 
-  // Function to open the reviews modal
   const openReviewsModal = (volunteer: Volunteer) => {
     setSelectedVolunteer(volunteer);
     setShowReviewsModal(true);
     fetchReviews(volunteer.id);
   };
 
-  // Function to find matching volunteers
+  // function to find matching volunteers
   const handleFindMatch = async () => {
     setIsFindingMatch(true);
     setNoMatchFound(false);
@@ -655,7 +633,7 @@ export default function DashboardPage() {
       const data = await response.json();
 
       if (data.volunteers && data.volunteers.length > 0) {
-        // Add favorite status to matched volunteers
+        // adding favorite status to matched volunteers
         const volunteersWithFavoriteStatus = await checkFavoriteStatus(
           data.volunteers
         );
@@ -695,7 +673,6 @@ export default function DashboardPage() {
     }));
   };
 
-  // Function to apply filters
   const applyFilters = (
     volunteers: Volunteer[],
     searchTerm: string,
@@ -703,7 +680,6 @@ export default function DashboardPage() {
   ) => {
     let result = volunteers;
 
-    // Apply search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(
@@ -715,7 +691,6 @@ export default function DashboardPage() {
       );
     }
 
-    // Apply service filters
     const activeServiceFilters = Object.entries(filters.services)
       .filter(([_, isActive]) => isActive)
       .map(([service]) => service);
@@ -733,7 +708,6 @@ export default function DashboardPage() {
       );
     }
 
-    // Apply weekday filters
     const activeWeekDayFilters = Object.entries(filters.weekDays)
       .filter(([_, isActive]) => isActive)
       .map(([day]) => day);
@@ -749,12 +723,10 @@ export default function DashboardPage() {
     return result;
   };
 
-  // Apply filters and search
   useEffect(() => {
     setFilteredVolunteers(applyFilters(volunteers, searchTerm, filters));
   }, [searchTerm, filters, volunteers]);
 
-  // Helper function to format availability for display
   const formatAvailability = (volunteer: Volunteer): string => {
     if (!volunteer.availabilities) {
       return "Availability not specified";
@@ -782,7 +754,6 @@ export default function DashboardPage() {
     return availabilityText || "Availability not specified";
   };
 
-  // Format date for display
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {

@@ -34,7 +34,7 @@ export default function HeroSection() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               {isAuthenticated ? (
                 <Link to="/dashboard">
-                  <Button className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-6 h-auto text-lg rounded-xl shadow-lg shadow-rose-200 transition-all hover:shadow-xl hover:shadow-rose-300 hover:-translate-y-1">
+                  <Button className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg shadow-rose-200 transition-all hover:shadow-xl hover:shadow-rose-300 hover:-translate-y-1">
                     {currentRole === "elder"
                       ? "My Care Dashboard"
                       : "My Volunteer Dashboard"}
@@ -43,7 +43,7 @@ export default function HeroSection() {
                 </Link>
               ) : (
                 <Link to="/auth/register">
-                  <Button className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-6 h-auto text-lg rounded-xl shadow-lg shadow-rose-200 transition-all hover:shadow-xl hover:shadow-rose-300 hover:-translate-y-1">
+                  <Button className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg shadow-rose-200 transition-all hover:shadow-xl hover:shadow-rose-300 hover:-translate-y-1">
                     Join Our Community
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
@@ -52,7 +52,7 @@ export default function HeroSection() {
               <a href="#how-it-works">
                 <Button
                   variant="outline"
-                  className="px-8 py-6 h-auto text-lg rounded-xl border-2 border-rose-200 hover:border-rose-300 hover:bg-rose-50 transition-all"
+                  className="px-8 py-6 text-lg rounded-xl border-2 border-rose-200 hover:border-rose-300 hover:bg-rose-50 transition-all"
                 >
                   Learn More
                 </Button>

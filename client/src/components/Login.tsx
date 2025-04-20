@@ -11,14 +11,16 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
-import { HeartHandshake, Loader2 } from "lucide-react";
+import { HeartHandshake, Loader2 } from 'lucide-react';
 import { useToast } from "../contexts/ToastContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useUserData } from "../contexts/UserContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { showToast } = useToast();
+  const { fetchUserData } = useUserData();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -49,7 +51,13 @@ const LoginPage = () => {
         throw new Error(data.message || "Login failed");
       }
 
+      // First, set the auth token
       login(data.token);
+      
+      // Then, fetch user data before redirecting
+      await fetchUserData();
+      
+      // Now redirect to dashboard
       const redirectUrl = sessionStorage.getItem("redirectUrl");
       const safeRedirectUrl =
         !redirectUrl || redirectUrl === "/auth/login" || redirectUrl === "/"
@@ -73,7 +81,6 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
-
       <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-rose-200 rounded-full opacity-20 blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-rose-300 rounded-full opacity-20 blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
       <div className="absolute inset-0 bg-[url('/placeholder.svg?height=100&width=100')] bg-repeat opacity-5"></div>
@@ -177,7 +184,7 @@ const LoginPage = () => {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 text-white py-6 h-auto text-lg rounded-xl shadow-lg shadow-rose-200/50 transition-all hover:shadow-xl hover:shadow-rose-300/50"
+                className="w-full bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 text-white py-6 text-sm rounded-xl shadow-lg shadow-rose-200/50 transition-all hover:shadow-xl hover:shadow-rose-300/50"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -194,9 +201,6 @@ const LoginPage = () => {
           <CardFooter className="flex flex-col space-y-4 pt-0">
             <div className="relative flex items-center w-full py-5">
               <div className="flex-grow border-t border-gray-200"></div>
-              <span className="flex-shrink mx-4 text-gray-400 text-sm">
-                or continue with
-              </span>
               <div className="flex-grow border-t border-gray-200"></div>
             </div>
 
