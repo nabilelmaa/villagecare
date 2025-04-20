@@ -1,7 +1,7 @@
 # VillageCare
 
 <div align="center">
-  <img src="/vite.svg" alt="VillageCare Logo" width="100" height="100">
+  <img src="https://media-hosting.imagekit.io/2d4df6c951db446c/extension_icon%20(7).svg?Expires=1839720377&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=feEwLP1eVV1hpghh~nbl3hfUC8prRi14Irr9jIhH2BbRBGBe9skWJ~pJngg-Nw59zG~GKI9L~kI3b4sclzW7OhRDN7cd1t3yANhCAGV~2C4Eq~SLwPwhfLn96~veHlPpH9Bu1Htue2XhpAB~4UeI6Kc9vspw~MFAJVsqxy3jggbTpsaaOhlMev5LJSoYjn2xgEGjo97OQHXWUZB-I0-peqjMpS4DqHLKImbbn9KR~n1Ans0IEzqT7wt2WxiE0HL-TjSUM8~SsLe536iQw0PE~wYeXkV7MGsBAqaCX-7IWuzd2N9YgsZg5iC301ajwB5pYR-16NxLj5WGtHovYvGemA__" alt="VillageCare Logo" width="100" height="100">
   <h1>VillageCare - Bridging Generations Through Care</h1>
   <p>A platform connecting elders and volunteers, fostering a community where compassion meets companionship.</p>
 </div>
