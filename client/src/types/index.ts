@@ -25,6 +25,7 @@ export interface Service {
 }
 
 export interface Review {
+  id: Key | null | undefined
   rating: number;
   comment: string;
   elder_first_name: string;

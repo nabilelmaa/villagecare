@@ -9,6 +9,7 @@ import {
   Heart,
   HelpCircle,
   Menu,
+  Star,
 } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -81,6 +82,11 @@ export default function Sidebar() {
       icon: Bell,
       badge: unreadCount > 0 ? unreadCount : null,
     },
+    {
+      title: "Reviews",
+      href: "/reviews",
+      icon: Star,
+    },
   ];
 
   const bottomLinks = [
@@ -98,6 +104,7 @@ export default function Sidebar() {
     location.pathname.startsWith("/notifications") ||
     location.pathname.startsWith("/profile") ||
     location.pathname.startsWith("/favorites") ||
+    location.pathname.startsWith("/reviews") ||
     location.pathname.startsWith("/help");
 
   // in order to not render sidebar on non-dashboard pages

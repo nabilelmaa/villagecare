@@ -7,7 +7,6 @@ export default function ServicesSection() {
       id="services"
       className="w-full py-20 md:py-32 bg-gradient-to-b from-white to-rose-50 relative overflow-hidden"
     >
-      {/* Decorative elements */}
       <div className="absolute top-1/3 right-0 w-64 h-64 bg-rose-300 rounded-full opacity-20 blur-3xl transform translate-x-1/2"></div>
       <div className="absolute bottom-0 left-0 w-full h-1/2 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-rose-100/30 to-transparent"></div>
 

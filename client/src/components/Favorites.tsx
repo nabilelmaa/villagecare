@@ -10,17 +10,27 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
-import { Badge } from "../components/ui/badge";
-import {
-  Clock,
-  Heart,
-  MessageCircle,
-  Star,
-  Loader2,
-  Search,
-} from "lucide-react";
+import { Heart, Star, Loader2, Search, AlertCircle } from "lucide-react";
 import { useToast } from "../contexts/ToastContext";
 import { Input } from "../components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import { Checkbox } from "../components/ui/checkbox";
+import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
 
 interface Volunteer {
   id: number;
@@ -39,6 +49,23 @@ interface Volunteer {
     day_of_week: string;
     time_of_day: string;
   }[];
+  gender?: string;
+  city?: string;
+}
+
+interface RequestFormData {
+  service_id: number | null;
+  day_of_week: string;
+  time_of_day: string;
+  details: string;
+  urgent: boolean;
+  volunteer_id: number;
+}
+
+interface Service {
+  id: number;
+  name: string;
+  description: string | null;
 }
 
 export default function FavoritesPage() {
@@ -49,6 +76,37 @@ export default function FavoritesPage() {
   const [animateCards, setAnimateCards] = useState(false);
 
   const { showToast } = useToast();
+
+  // Add these state variables inside the FavoritesPage component
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestVolunteer, setRequestVolunteer] = useState<Volunteer | null>(
+    null
+  );
+  const [requestFormData, setRequestFormData] = useState<RequestFormData>({
+    service_id: null,
+    day_of_week: "",
+    time_of_day: "",
+    details: "",
+    urgent: false,
+    volunteer_id: 0,
+  });
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+  const [formErrors, setFormErrors] = useState<{
+    service_id?: string;
+    day_of_week?: string;
+    time_of_day?: string;
+    details?: string;
+  }>({});
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
+
+  // Add these state variables after the other state declarations
+  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(
+    null
+  );
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
 
   useEffect(() => {
     fetchFavorites();
@@ -178,6 +236,173 @@ export default function FavoritesPage() {
     return availabilityText || "Availability not specified";
   };
 
+  const fetchServices = async () => {
+    setIsLoadingServices(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        showToast("Please log in again", "error");
+        return;
+      }
+
+      const response = await fetch("http://localhost:5000/api/user/services", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch services");
+      }
+
+      const data = await response.json();
+      setServices(data.services);
+    } catch (error) {
+      console.error("Error fetching services:", error);
+      showToast("Failed to load services", "error");
+    } finally {
+      setIsLoadingServices(false);
+    }
+  };
+
+  const openRequestModal = (volunteer: Volunteer) => {
+    setRequestVolunteer(volunteer);
+    setRequestFormData({
+      service_id: null,
+      day_of_week: "",
+      time_of_day: "",
+      details: "",
+      urgent: false,
+      volunteer_id: volunteer.id,
+    });
+    setFormErrors({});
+    fetchServices();
+    setShowRequestModal(true);
+  };
+
+  const validateRequestForm = (): boolean => {
+    const errors: {
+      service_id?: string;
+      day_of_week?: string;
+      time_of_day?: string;
+      details?: string;
+    } = {};
+
+    if (!requestFormData.service_id) {
+      errors.service_id = "Please select a service";
+    }
+
+    if (!requestFormData.day_of_week) {
+      errors.day_of_week = "Please select a day";
+    }
+
+    if (!requestFormData.time_of_day) {
+      errors.time_of_day = "Please select a time";
+    }
+
+    if (!requestFormData.details.trim()) {
+      errors.details = "Please provide details about your request";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const submitHelpRequest = async () => {
+    if (!validateRequestForm()) {
+      return;
+    }
+
+    setIsSubmittingRequest(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        showToast("Please log in again", "error");
+        return;
+      }
+
+      const response = await fetch("http://localhost:5000/api/requests/new", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestFormData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to submit request");
+      }
+
+      showToast("Help request submitted successfully", "success");
+      setShowRequestModal(false);
+    } catch (error) {
+      console.error("Error submitting help request:", error);
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while submitting your request",
+        "error"
+      );
+    } finally {
+      setIsSubmittingRequest(false);
+    }
+  };
+
+  // Add this function before the return statement
+  const openReviewsModal = (volunteer: Volunteer) => {
+    setSelectedVolunteer(volunteer);
+    setShowReviewsModal(true);
+    fetchReviews(volunteer.id);
+  };
+
+  const fetchReviews = async (volunteerId: number) => {
+    setIsLoadingReviews(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        showToast("Please log in again", "error");
+        return;
+      }
+
+      const response = await fetch(
+        `http://localhost:5000/api/user/${volunteerId}/reviews`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch reviews");
+      }
+
+      const data = await response.json();
+      setReviews(data.reviews);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      showToast("Failed to load reviews", "error");
+    } finally {
+      setIsLoadingReviews(false);
+    }
+  };
+
+  // Add the formatDate function
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -245,111 +470,85 @@ export default function FavoritesPage() {
                   animateCards
                     ? "animate-in fade-in slide-in-from-bottom-8"
                     : "opacity-0"
+                } ${
+                  volunteer.gender === "male"
+                    ? "bg-gradient-to-br from-white to-blue-50"
+                    : "bg-gradient-to-br from-white to-rose-50"
                 }`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="relative h-48 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
-                  <div className="absolute bottom-4 left-4 z-20 flex items-center">
-                    <div className="bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 flex items-center shadow-sm">
-                      <Star className="h-3.5 w-3.5 text-yellow-500 mr-1" />
-                      <span className="text-sm font-medium">
+                <CardHeader>
+                  <CardTitle className="text-xl font-semibold flex items-center justify-between">
+                    {volunteer.first_name} {volunteer.last_name}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="hover:bg-gray-100 rounded-full p-2 -mr-2"
+                      onClick={() => removeFromFavorites(volunteer.id)}
+                    >
+                      <Heart className="h-5 w-5 text-rose-500 fill-rose-500" />
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex items-center space-x-4">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage
+                      src={volunteer.profile_image_url || ""}
+                      alt={volunteer.first_name}
+                    />
+                    <AvatarFallback>
+                      {volunteer.first_name[0]}
+                      {volunteer.last_name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="flex items-center gap-1">
+                      <Star className="h-4 w-4 text-amber-500" />
+                      <span className="text-sm font-medium text-gray-700">
                         {Number.parseFloat(volunteer.rating).toFixed(1)}
                       </span>
-                      <span className="text-xs text-gray-500 ml-1">
-                        ({volunteer.review_count})
+                      <span className="text-xs text-gray-500">
+                        ({volunteer.review_count} reviews)
                       </span>
                     </div>
+                    <p className="text-sm text-gray-500">{volunteer.city}</p>
                   </div>
-                  <div className="relative h-full w-full">
-                    <img
-                      src={
-                        volunteer.profile_image_url ||
-                        "/placeholder.svg?height=400&width=400" ||
-                        "/placeholder.svg" ||
-                        "/placeholder.svg" ||
-                        "/placeholder.svg"
-                      }
-                      alt={`${volunteer.first_name} ${volunteer.last_name}`}
-                      className="object-cover h-full w-full"
-                    />
-                  </div>
-                </div>
-                <CardHeader className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg font-bold">
-                        {volunteer.first_name} {volunteer.last_name}
-                      </CardTitle>
-                    </div>
-                    <Avatar className="h-12 w-12 border-2 border-white shadow-md">
-                      <AvatarImage
-                        src={
-                          volunteer.profile_image_url ||
-                          "/placeholder.svg?height=100&width=100" ||
-                          "/placeholder.svg" ||
-                          "/placeholder.svg" ||
-                          "/placeholder.svg"
-                        }
-                        alt={`${volunteer.first_name} ${volunteer.last_name}`}
-                      />
-                      <AvatarFallback className="bg-rose-100 text-rose-800">
-                        {volunteer.first_name.charAt(0)}
-                        {volunteer.last_name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 pt-0 space-y-3">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Clock className="h-4 w-4 mr-1 text-gray-400" />
-                    {formatAvailability(volunteer)}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {volunteer.services && volunteer.services.length > 0 ? (
-                      volunteer.services.map((service) => (
-                        <Badge
-                          key={service.id}
-                          variant="outline"
-                          className="bg-rose-50 border-rose-100 text-rose-800"
-                        >
-                          {service.name}
-                        </Badge>
-                      ))
-                    ) : (
-                      <Badge
-                        variant="outline"
-                        className="bg-gray-50 border-gray-100 text-gray-600"
-                      >
-                        No services specified
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                    {volunteer.bio}
-                  </p>
                 </CardContent>
-                <CardFooter className="p-4 pt-0 flex justify-between">
+                <CardContent>
+                  <p className="text-sm text-gray-700">{volunteer.bio}</p>
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-800">
+                      Services:
+                    </h4>
+                    <ul className="list-disc list-inside text-sm text-gray-600">
+                      {volunteer.services &&
+                        volunteer.services.map((service) => (
+                          <li key={service.id}>{service.name}</li>
+                        ))}
+                    </ul>
+                  </div>
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-800">
+                      Availability:
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      {formatAvailability(volunteer)}
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-between items-center">
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
-                    className="rounded-lg border-rose-200 text-rose-700 hover:bg-rose-50"
-                    onClick={() => removeFromFavorites(volunteer.id)}
+                    onClick={() => openReviewsModal(volunteer)}
                   >
-                    <Heart className="h-4 w-4 mr-1.5 fill-rose-600" />
-                    Remove
+                    <Star className="w-4 h-4 mr-2" />
+                    Reviews
                   </Button>
                   <Button
-                    variant="outline"
                     size="sm"
-                    className="rounded-lg border-rose-200 text-rose-700 hover:bg-rose-50"
-                  >
-                    <MessageCircle className="h-4 w-4 mr-1.5" />
-                    Message
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="rounded-lg bg-rose-600 hover:bg-rose-700"
+                    className="bg-rose-600 hover:bg-rose-700"
+                    onClick={() => openRequestModal(volunteer)}
                   >
                     Request Help
                   </Button>
@@ -359,6 +558,291 @@ export default function FavoritesPage() {
           </div>
         )}
       </div>
+      {/* Request Help Modal */}
+      <Dialog open={showRequestModal} onOpenChange={setShowRequestModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Request Help</DialogTitle>
+            <DialogDescription>
+              Fill out the form below to request help from{" "}
+              {requestVolunteer?.first_name} {requestVolunteer?.last_name}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Service Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="service">
+                Service Type <span className="text-rose-500">*</span>
+              </Label>
+              {isLoadingServices ? (
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-rose-500" />
+                  <span className="text-sm text-gray-500">
+                    Loading services...
+                  </span>
+                </div>
+              ) : (
+                <Select
+                  value={requestFormData.service_id?.toString() || ""}
+                  onValueChange={(value: string) =>
+                    setRequestFormData({
+                      ...requestFormData,
+                      service_id: Number.parseInt(value),
+                    })
+                  }
+                >
+                  <SelectTrigger
+                    className={
+                      formErrors.service_id
+                        ? "border-rose-500 focus:ring-rose-500"
+                        : ""
+                    }
+                  >
+                    <SelectValue placeholder="Select a service" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {services.map((service) => (
+                      <SelectItem
+                        key={service.id}
+                        value={service.id.toString()}
+                      >
+                        {service.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {formErrors.service_id && (
+                <p className="text-sm text-rose-500 flex items-center mt-1">
+                  <AlertCircle className="h-3.5 w-3.5 mr-1" />
+                  {formErrors.service_id}
+                </p>
+              )}
+            </div>
+
+            {/* Day of Week */}
+            <div className="space-y-2">
+              <Label htmlFor="day_of_week">
+                Day of Week <span className="text-rose-500">*</span>
+              </Label>
+              <Select
+                value={requestFormData.day_of_week}
+                onValueChange={(value: any) =>
+                  setRequestFormData({
+                    ...requestFormData,
+                    day_of_week: value,
+                  })
+                }
+              >
+                <SelectTrigger
+                  className={
+                    formErrors.day_of_week
+                      ? "border-rose-500 focus:ring-rose-500"
+                      : ""
+                  }
+                >
+                  <SelectValue placeholder="Select a day" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monday">Monday</SelectItem>
+                  <SelectItem value="tuesday">Tuesday</SelectItem>
+                  <SelectItem value="wednesday">Wednesday</SelectItem>
+                  <SelectItem value="thursday">Thursday</SelectItem>
+                  <SelectItem value="friday">Friday</SelectItem>
+                  <SelectItem value="saturday">Saturday</SelectItem>
+                  <SelectItem value="sunday">Sunday</SelectItem>
+                </SelectContent>
+              </Select>
+              {formErrors.day_of_week && (
+                <p className="text-sm text-rose-500 flex items-center mt-1">
+                  <AlertCircle className="h-3.5 w-3.5 mr-1" />
+                  {formErrors.day_of_week}
+                </p>
+              )}
+            </div>
+
+            {/* Time of Day */}
+            <div className="space-y-2">
+              <Label htmlFor="time_of_day">
+                Time of Day <span className="text-rose-500">*</span>
+              </Label>
+              <Select
+                value={requestFormData.time_of_day}
+                onValueChange={(value: any) =>
+                  setRequestFormData({
+                    ...requestFormData,
+                    time_of_day: value,
+                  })
+                }
+              >
+                <SelectTrigger
+                  className={
+                    formErrors.time_of_day
+                      ? "border-rose-500 focus:ring-rose-500"
+                      : ""
+                  }
+                >
+                  <SelectValue placeholder="Select a time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="morning">Morning</SelectItem>
+                  <SelectItem value="afternoon">Afternoon</SelectItem>
+                  <SelectItem value="evening">Evening</SelectItem>
+                </SelectContent>
+              </Select>
+              {formErrors.time_of_day && (
+                <p className="text-sm text-rose-500 flex items-center mt-1">
+                  <AlertCircle className="h-3.5 w-3.5 mr-1" />
+                  {formErrors.time_of_day}
+                </p>
+              )}
+            </div>
+
+            {/* Details */}
+            <div className="space-y-2">
+              <Label htmlFor="details">
+                Details <span className="text-rose-500">*</span>
+              </Label>
+              <Textarea
+                id="details"
+                placeholder="Please provide details about your request..."
+                value={requestFormData.details}
+                onChange={(e: { target: { value: any } }) =>
+                  setRequestFormData({
+                    ...requestFormData,
+                    details: e.target.value,
+                  })
+                }
+                className={
+                  formErrors.details
+                    ? "border-rose-500 focus:ring-rose-500"
+                    : ""
+                }
+                rows={4}
+              />
+              {formErrors.details && (
+                <p className="text-sm text-rose-500 flex items-center mt-1">
+                  <AlertCircle className="h-3.5 w-3.5 mr-1" />
+                  {formErrors.details}
+                </p>
+              )}
+            </div>
+
+            {/* Urgent */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="urgent"
+                checked={requestFormData.urgent}
+                onCheckedChange={(checked: boolean) =>
+                  setRequestFormData({
+                    ...requestFormData,
+                    urgent: checked === true,
+                  })
+                }
+              />
+              <Label
+                htmlFor="urgent"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                This is an urgent request
+              </Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowRequestModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={submitHelpRequest}
+              className="bg-rose-600 hover:bg-rose-700"
+              disabled={isSubmittingRequest}
+            >
+              {isSubmittingRequest ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Request"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Add the Reviews Modal at the end of the component, right before the closing </div> of the container */}
+      <Dialog open={showReviewsModal} onOpenChange={setShowReviewsModal}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-yellow-500" />
+              Reviews for {selectedVolunteer?.first_name}{" "}
+              {selectedVolunteer?.last_name}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedVolunteer?.review_count} reviews with an average rating
+              of{" "}
+              {selectedVolunteer?.rating
+                ? Number.parseFloat(selectedVolunteer.rating).toFixed(1)
+                : "0"}{" "}
+              out of 5
+            </DialogDescription>
+          </DialogHeader>
+
+          {isLoadingReviews ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-rose-500 mr-2" />
+              <p>Loading reviews...</p>
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">
+                No reviews yet for this volunteer.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4 my-4">
+              {reviews.map((review, index) => (
+                <div
+                  key={index}
+                  className="border border-gray-100 rounded-lg p-4 bg-gray-50"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className="flex mb-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`h-4 w-4 ${
+                              star <= review.rating
+                                ? "text-yellow-500"
+                                : "text-gray-300"
+                            }`}
+                            fill={
+                              star <= review.rating ? "currentColor" : "none"
+                            }
+                          />
+                        ))}
+                      </div>
+                      <p className="font-medium text-sm">
+                        {review.elder_first_name} {review.elder_last_name}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {formatDate(review.created_at)}
+                    </p>
+                  </div>
+                  <p className="text-gray-700 text-sm">{review.comment}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

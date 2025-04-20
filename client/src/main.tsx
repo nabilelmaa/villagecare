@@ -12,6 +12,7 @@ import Profile from "./components/Profile.tsx";
 import Requests from "./components/Requests.tsx";
 import Favorites from "./components/Favorites.tsx";
 import Notifications from "./components/Notifications.tsx";
+import Reviews from "./components/Reviews.tsx";
 import Help from "./components/Help";
 import NotFound from "./components/NotFound";
 import { ToastProvider } from "./contexts/ToastContext.tsx";
@@ -47,6 +48,10 @@ const router = createBrowserRouter(
         {
           path: "/notifications",
           element: <ProtectedRoute element={<Notifications />} />,
+        },
+        {
+          path: "/Reviews",
+          element: <ProtectedRoute element={<Reviews />} />,
         },
         {
           path: "/help",

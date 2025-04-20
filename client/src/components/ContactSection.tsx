@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom"
-import { Button } from "../components/ui/button"
+import { Link } from "react-router-dom";
+import { Button } from "../components/ui/button";
 
 export default function ContactSection() {
   return (
@@ -18,8 +18,9 @@ export default function ContactSection() {
             Ready to Make a Difference?
           </h2>
           <p className="text-gray-600 md:text-xl/relaxed mb-8 max-w-2xl mx-auto">
-            Whether you're seeking support or want to offer your time to help others, VillageCare is the community where
-            meaningful connections happen.
+            Whether you're seeking support or want to offer your time to help
+            others, VillageCare is the community where meaningful connections
+            happen.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth/register">
@@ -39,5 +40,5 @@ export default function ContactSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

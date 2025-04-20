@@ -5,7 +5,6 @@ import { Button } from "../components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -19,8 +18,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
 import {
-  Clock,
-  Calendar,
   Heart,
   MessageCircle,
   Star,
@@ -28,7 +25,6 @@ import {
   Search,
   Loader2,
   AlertCircle,
-  MapPin,
 } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { Switch } from "../components/ui/switch";
@@ -54,7 +50,8 @@ import { Checkbox } from "../components/ui/checkbox";
 import { useUserData } from "../contexts/UserContext";
 import { useToast } from "../contexts/ToastContext";
 
-import { Service, Review } from "../types/index";
+import type { Service, Review } from "../types/index";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Volunteer {
   id: number;
@@ -138,6 +135,18 @@ export default function DashboardPage() {
     },
   });
 
+  // Add state for the creative loading animation
+  const [showCreativeLoading, setShowCreativeLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingStage, setLoadingStage] = useState(0);
+  const loadingStages = [
+    "Analyzing your preferences...",
+    "Searching for compatible volunteers...",
+    "Checking availability...",
+    "Finding perfect matches...",
+    "Almost there...",
+  ];
+
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(
     null
   );
@@ -175,6 +184,7 @@ export default function DashboardPage() {
   const { userData, currentRole } = useUserData();
   const { showToast } = useToast();
   const [animateCards, setAnimateCards] = useState(false);
+  const [isShowingMatchResults, setIsShowingMatchResults] = useState(false);
 
   const fetchServices = async () => {
     setIsLoadingServices(true);
@@ -603,15 +613,41 @@ export default function DashboardPage() {
     fetchReviews(volunteer.id);
   };
 
-  // function to find matching volunteers
   const handleFindMatch = async () => {
     setIsFindingMatch(true);
     setNoMatchFound(false);
+    setShowCreativeLoading(true);
+    setLoadingProgress(0);
+    setLoadingStage(0);
+
+    const totalDuration = 3000; // 3 seconds total
+    const progressInterval = 50; // Update every 50ms
+    const totalSteps = totalDuration / progressInterval;
+    const progressIncrement = 100 / totalSteps;
+
+    let currentProgress = 0;
+    const progressTimer = setInterval(() => {
+      currentProgress += progressIncrement;
+      setLoadingProgress(Math.min(currentProgress, 100));
+
+      // loading stage based on progress
+      if (currentProgress > 20 && loadingStage === 0) setLoadingStage(1);
+      if (currentProgress > 40 && loadingStage === 1) setLoadingStage(2);
+      if (currentProgress > 60 && loadingStage === 2) setLoadingStage(3);
+      if (currentProgress > 80 && loadingStage === 3) setLoadingStage(4);
+
+      if (currentProgress >= 100) {
+        clearInterval(progressTimer);
+      }
+    }, progressInterval);
+
+    let matchData = null;
+    let matchError = null;
 
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        showToast("Please log in again", "error");
+        matchError = "Please log in again";
         return;
       }
 
@@ -630,33 +666,67 @@ export default function DashboardPage() {
         throw new Error("Failed to find matching volunteers");
       }
 
-      const data = await response.json();
-
-      if (data.volunteers && data.volunteers.length > 0) {
-        // adding favorite status to matched volunteers
-        const volunteersWithFavoriteStatus = await checkFavoriteStatus(
-          data.volunteers
-        );
-        setMatchedVolunteers(volunteersWithFavoriteStatus);
-        setShowMatchModal(true);
-      } else {
-        setNoMatchFound(true);
-        showToast(
-          "No matching volunteers found. Please update your preferences in your profile.",
-          "info"
-        );
-      }
+      matchData = await response.json();
     } catch (error) {
       console.error("Error finding matches:", error);
-      showToast(
+      matchError =
         error instanceof Error
           ? error.message
-          : "An error occurred while finding matches",
-        "error"
-      );
-    } finally {
-      setIsFindingMatch(false);
+          : "An error occurred while finding matches";
     }
+
+    // the loading animation shows for at least 5 seconds
+    const startTime = Date.now();
+    const minimumLoadingTime = 5000; // 5 seconds
+    const elapsedTime = Date.now() - startTime;
+    const remainingTime = Math.max(0, minimumLoadingTime - elapsedTime);
+
+
+    setTimeout(async () => {
+
+      setIsFindingMatch(false);
+      setShowCreativeLoading(false);
+
+      setTimeout(async () => {
+        if (matchError) {
+          showToast(matchError, "error");
+          return;
+        }
+
+        if (matchData?.volunteers && matchData.volunteers.length > 0) {
+          // only show the matched volunteers, not all volunteers
+          const volunteersWithFavoriteStatus = await checkFavoriteStatus(
+            matchData.volunteers
+          );
+
+
+
+          // updating both the main volunteers list and filtered list to show ONLY the matched volunteers
+          setMatchedVolunteers(volunteersWithFavoriteStatus);
+          setFilteredVolunteers(volunteersWithFavoriteStatus);
+
+ 
+          setIsShowingMatchResults(true);
+
+          showToast(
+            "Found perfect matches for you! Displaying results now.",
+            "success"
+          );
+
+          setTimeout(() => {
+            document
+              .getElementById("volunteers-list")
+              ?.scrollIntoView({ behavior: "smooth" });
+          }, 100);
+        } else {
+          setNoMatchFound(true);
+          showToast(
+            "No matching volunteers found. Please update your preferences in your profile.",
+            "info"
+          );
+        }
+      }, 300); // Small delay after modal closes before showing toast
+    }, remainingTime);
   };
 
   const handleFilterChange = (
@@ -678,7 +748,15 @@ export default function DashboardPage() {
     searchTerm: string,
     filters: FiltersState
   ) => {
-    let result = volunteers;
+    // If we're showing match results and there are no filters or search terms active,
+    // use the matched volunteers instead of all volunteers
+    let result =
+      isShowingMatchResults &&
+      !searchTerm &&
+      !Object.values(filters.services).some(Boolean) &&
+      !Object.values(filters.weekDays).some(Boolean)
+        ? matchedVolunteers
+        : volunteers;
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -796,22 +874,181 @@ export default function DashboardPage() {
                 <Button
                   onClick={handleFindMatch}
                   disabled={isFindingMatch}
-                  className="bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 text-white shadow-md shadow-rose-200/50 rounded-xl px-6 py-2.5 h-auto"
+                  className="bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 text-white shadow-md shadow-rose-200/50 rounded-xl px-6 py-2.5 h-auto relative overflow-hidden group"
                 >
-                  {isFindingMatch ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Finding Matches...
-                    </>
-                  ) : (
-                    <>
-                      <Heart className="mr-2 h-5 w-5" />
-                      Find My Volunteer
-                    </>
-                  )}
+                  <AnimatePresence mode="wait">
+                    {showCreativeLoading ? (
+                      <motion.div
+                        key="loading"
+                        className="flex flex-col items-center justify-center w-full"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {/* Creative loading animation */}
+                        <motion.div className="absolute inset-0 bg-gradient-to-r from-rose-700/30 to-pink-600/30" />
+
+                        {/* Hearts floating up animation */}
+                        <div className="absolute inset-0 overflow-hidden">
+                          {[...Array(8)].map((_, i) => (
+                            <motion.div
+                              key={i}
+                              className="absolute bottom-0"
+                              initial={{
+                                x: Math.random() * 100 - 50,
+                                y: 20,
+                                opacity: 0,
+                                scale: 0.5 + Math.random() * 0.5,
+                              }}
+                              animate={{
+                                y: -60,
+                                opacity: [0, 1, 0],
+                                rotate: Math.random() * 360,
+                              }}
+                              transition={{
+                                duration: 2 + Math.random() * 2,
+                                repeat: Number.POSITIVE_INFINITY,
+                                delay: i * 0.3,
+                                ease: "easeOut",
+                              }}
+                              style={{
+                                left: `${10 + i * 10}%`,
+                              }}
+                            >
+                              <Heart
+                                className="text-white/80 h-4 w-4"
+                                fill="rgba(255,255,255,0.5)"
+                              />
+                            </motion.div>
+                          ))}
+                        </div>
+
+                        {/* Progress bar */}
+                        <div className="absolute bottom-0 left-0 h-1 bg-white/30 w-full">
+                          <motion.div
+                            className="h-full bg-white"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${loadingProgress}%` }}
+                            transition={{ duration: 0.1 }}
+                          />
+                        </div>
+
+                        {/* Loading text */}
+                        <motion.div
+                          className="relative z-10 text-center px-2"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          key={loadingStage}
+                        >
+                          {loadingStages[loadingStage]}
+                        </motion.div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="default"
+                        className="flex items-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <Heart className="mr-2 h-5 w-5" />
+                        Find My Volunteer
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </Button>
               )}
             </div>
+
+            {/* Show a fullscreen overlay when finding matches */}
+            {showCreativeLoading && (
+              <Dialog open={showCreativeLoading} onOpenChange={() => {}}>
+                <DialogContent className="sm:max-w-md bg-gradient-to-br from-rose-500 to-pink-600 border-none text-white">
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <motion.div
+                      className="relative w-32 h-32 mb-6"
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 20,
+                        repeat: Number.POSITIVE_INFINITY,
+                        ease: "linear",
+                      }}
+                    >
+                      {/* Circular arrangement of hearts */}
+                      {[...Array(8)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          className="absolute"
+                          style={{
+                            top: `${50 + 40 * Math.sin(i * (Math.PI / 4))}%`,
+                            left: `${50 + 40 * Math.cos(i * (Math.PI / 4))}%`,
+                            transform: "translate(-50%, -50%)",
+                          }}
+                          animate={{
+                            scale: [1, 1.2, 1],
+                            opacity: [0.7, 1, 0.7],
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Number.POSITIVE_INFINITY,
+                            delay: i * 0.25,
+                            ease: "easeInOut",
+                          }}
+                        >
+                          <Heart className="h-5 w-5 text-white" fill="white" />
+                        </motion.div>
+                      ))}
+
+    
+                      <motion.div
+                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                        animate={{
+                          scale: [1, 1.5, 1],
+                        }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Number.POSITIVE_INFINITY,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        <Heart className="h-10 w-10 text-white" fill="white" />
+                      </motion.div>
+                    </motion.div>
+
+                    <h2 className="text-2xl font-bold mb-2 text-center">
+                      Finding Your Perfect Match
+                    </h2>
+
+                    <motion.p
+                      className="text-white/90 text-center mb-6"
+                      key={loadingStage}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {loadingStages[loadingStage]}
+                    </motion.p>
+
+                    {/* Progress bar */}
+                    <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-white rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${loadingProgress}%` }}
+                        transition={{ duration: 0.1 }}
+                      />
+                    </div>
+
+                    <p className="text-white/70 text-sm mt-4">
+                      Finding volunteers that match your preferences...
+                    </p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
 
             {noMatchFound && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start">
@@ -857,12 +1094,20 @@ export default function DashboardPage() {
                 <Button
                   variant="outline"
                   className="flex items-center gap-2 border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl px-4"
-                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  onClick={() => {
+                    setIsFilterOpen(!isFilterOpen);
+                 
+                    if (isFilterOpen && isShowingMatchResults) {
+                      setIsShowingMatchResults(false);
+                      setFilteredVolunteers(volunteers);
+                    }
+                  }}
                 >
                   <Filter className="h-5 w-5" />
                   Filters
                   {(Object.values(filters.services).some(Boolean) ||
-                    Object.values(filters.weekDays).some(Boolean)) && (
+                    Object.values(filters.weekDays).some(Boolean) ||
+                    isShowingMatchResults) && (
                     <Badge className="ml-2 bg-rose-100 text-rose-800 hover:bg-rose-200">
                       Active
                     </Badge>
@@ -966,19 +1211,15 @@ export default function DashboardPage() {
                   value="volunteers"
                   className="rounded-lg data-[state=active]:bg-rose-50 data-[state=active]:text-rose-900 data-[state=active]:shadow-sm"
                 >
-                  {currentRole === "elder"
-                    ? "Available Volunteers"
-                    : "Help Requests"}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="requests"
-                  className="rounded-lg data-[state=active]:bg-rose-50 data-[state=active]:text-rose-900 data-[state=active]:shadow-sm"
-                >
-                  {currentRole === "elder" ? "My Requests" : "My Offers"}
+                  Available Volunteers
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="volunteers" className="space-y-6 mt-6">
+              <TabsContent
+                value="volunteers"
+                className="space-y-6 mt-6"
+                id="volunteers-list"
+              >
                 {filteredVolunteers.length === 0 ? (
                   <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
                     <div className="mx-auto w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mb-4">
@@ -1016,688 +1257,450 @@ export default function DashboardPage() {
                             sunday: false,
                           },
                         });
+                        // Reset match results mode if active
+                        if (isShowingMatchResults) {
+                          setIsShowingMatchResults(false);
+                          setFilteredVolunteers(volunteers);
+                        }
                       }}
                     >
                       Reset Filters
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredVolunteers.map((volunteer, index) => (
-                      <Card
-                        key={volunteer.id}
-                        className={`overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl ${
-                          animateCards
-                            ? "animate-in fade-in slide-in-from-bottom-8"
-                            : "opacity-0"
-                        }`}
-                        style={{ animationDelay: `${index * 100}ms` }}
-                      >
-                        <div className="relative h-48 overflow-hidden">
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
-                          <div className="absolute bottom-4 left-4 z-20 flex items-center">
-                            <div className="bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 flex items-center shadow-sm">
-                              <Star className="h-3.5 w-3.5 text-yellow-500 mr-1" />
-                              <span className="text-sm font-medium">
-                                {Number.parseFloat(volunteer.rating).toFixed(1)}
-                              </span>
-                              <span className="text-xs text-gray-500 ml-1">
-                                ({volunteer.review_count})
-                              </span>
-                            </div>
-                          </div>
-                          <div className="relative h-full w-full">
-                            <img
-                              src={
-                                volunteer.profile_image_url ||
-                                "/placeholder.svg?height=400&width=400" ||
-                                "/placeholder.svg" ||
-                                "/placeholder.svg"
-                              }
-                              alt={`${volunteer.first_name} ${volunteer.last_name}`}
-                              className="object-cover h-full w-full"
-                            />
+                  <>
+      
+                    {isShowingMatchResults && (
+                      <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 mb-6 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Heart
+                            className="text-rose-500 h-5 w-5 mr-3 flex-shrink-0"
+                            fill="rgba(244,63,94,0.2)"
+                          />
+                          <div>
+                            <h3 className="font-medium text-rose-800">
+                              Showing your perfect matches
+                            </h3>
+                            <p className="text-rose-700 text-sm">
+                              We've found {filteredVolunteers.length} volunteer
+                              {filteredVolunteers.length !== 1 ? "s" : ""} that
+                              match your preferences.
+                            </p>
                           </div>
                         </div>
-                        <CardHeader className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <CardTitle className="text-lg font-bold">
-                                {volunteer.first_name} {volunteer.last_name}
-                              </CardTitle>
-                              <div className="flex items-center mt-1 text-sm text-gray-500">
-                                <MapPin className="h-3.5 w-3.5 mr-1 text-gray-400" />
-                                {volunteer.city.charAt(0).toUpperCase() +
-                                  volunteer.city.slice(1) ||
-                                  "Location not specified"}
-                              </div>
-                            </div>
-                            <Avatar className="h-12 w-12 border-2 border-white shadow-md">
-                              <AvatarImage
-                                src={
-                                  volunteer.profile_image_url ||
-                                  "/placeholder.svg?height=100&width=100" ||
-                                  "/placeholder.svg" ||
-                                  "/placeholder.svg"
-                                }
-                                alt={`${volunteer.first_name} ${volunteer.last_name}`}
-                              />
-                              <AvatarFallback className="bg-rose-100 text-rose-800">
-                                {volunteer.first_name.charAt(0)}
-                                {volunteer.last_name.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0 space-y-3">
-                          <div className="flex items-center text-sm text-gray-500">
-                            <Clock className="h-4 w-4 mr-1 text-gray-400" />
-                            {formatAvailability(volunteer)}
-                          </div>
-                          <div className="flex flex-wrap gap-1.5 mt-2">
-                            {volunteer.services &&
-                              volunteer.services.map((service) => (
-                                <Badge
-                                  key={service.id}
-                                  variant="outline"
-                                  className="bg-rose-50 border-rose-100 text-rose-800"
-                                >
-                                  {service.name}
-                                </Badge>
-                              ))}
-                          </div>
-                          <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                            {volunteer.bio}
-                          </p>
-                        </CardContent>
-                        <CardFooter className="p-4 pt-0 flex justify-between">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className={`rounded-lg ${
-                              volunteer.isFavorite
-                                ? "text-rose-600"
-                                : "text-gray-400"
-                            } hover:text-rose-600 hover:bg-rose-50`}
-                            onClick={(e: { stopPropagation: () => void }) => {
-                              e.stopPropagation();
-                              toggleFavorite(
-                                volunteer.id,
-                                volunteer.isFavorite || false
-                              );
-                            }}
-                          >
-                            <Heart
-                              className={`h-5 w-5 ${
-                                volunteer.isFavorite ? "fill-rose-600" : ""
-                              }`}
-                            />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="rounded-lg border-rose-200 text-rose-700 hover:bg-rose-50"
-                            onClick={() => openReviewsModal(volunteer)}
-                          >
-                            <Star className="h-4 w-4 mr-1.5" />
-                            Reviews
-                          </Button>
-                          {currentRole === "elder" ? (
-                            <Button
-                              size="sm"
-                              className="rounded-lg bg-rose-600 hover:bg-rose-700"
-                              onClick={() => openRequestModal(volunteer)}
-                            >
-                              Request Help
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="rounded-lg border-rose-200 text-rose-700 hover:bg-rose-50"
-                            >
-                              <MessageCircle className="h-4 w-4 mr-1.5" />
-                              Message
-                            </Button>
-                          )}
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="requests" className="space-y-6 mt-6">
-                <div className="text-center py-8">
-                  <p className="text-gray-500">
-                    Please visit the Requests page to view your requests.
-                  </p>
-                  <Button
-                    className="mt-4 bg-rose-600 hover:bg-rose-700"
-                    onClick={() => (window.location.href = "/requests")}
-                  >
-                    Go to Requests
-                  </Button>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-
-          {/* Match Modal */}
-          {showMatchModal && matchedVolunteers.length > 0 && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-300">
-              <div className="relative max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <Card className="border-0 shadow-2xl overflow-hidden rounded-2xl">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-rose-100 rounded-full opacity-50 blur-2xl transform translate-x-1/2 -translate-y-1/2"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-pink-100 rounded-full opacity-50 blur-2xl transform -translate-x-1/2 translate-y-1/2"></div>
-
-                  <CardHeader className="text-center relative z-10 pb-0">
-                    <div className="mt-2">
-                      <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-rose-700 to-rose-500">
-                        Perfect Matches Found!
-                      </CardTitle>
-                      <CardDescription className="text-gray-600">
-                        Based on your preferences and needs, we found{" "}
-                        {matchedVolunteers.length} volunteer
-                        {matchedVolunteers.length > 1 ? "s" : ""} that match
-                        your profile
-                      </CardDescription>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-6 relative z-10">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {matchedVolunteers.map((volunteer, index) => (
-                        <div
-                          key={volunteer.id}
-                          className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-rose-200 text-rose-700 hover:bg-rose-100"
+                          onClick={() => {
+                            setIsShowingMatchResults(false);
+                            setFilteredVolunteers(volunteers);
+                          }}
                         >
-                          <div className="flex items-center p-4 border-b border-gray-100">
-                            <Avatar className="h-14 w-14 border-2 border-white shadow-md mr-4">
-                              <AvatarImage
-                                src={
-                                  volunteer.profile_image_url ||
-                                  "/placeholder.svg?height=100&width=100" ||
-                                  "/placeholder.svg" ||
-                                  "/placeholder.svg"
-                                }
-                                alt={`${volunteer.first_name} ${volunteer.last_name}`}
-                              />
-                              <AvatarFallback className="bg-rose-100 text-rose-800">
-                                {volunteer.first_name.charAt(0)}
-                                {volunteer.last_name.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h3 className="text-lg font-bold">
-                                {volunteer.first_name} {volunteer.last_name}
-                              </h3>
-                              <div className="flex items-center mt-1">
-                                <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                                <span className="text-sm font-medium">
-                                  {Number.parseFloat(volunteer.rating).toFixed(
-                                    1
-                                  )}
-                                </span>
-                                <span className="text-xs text-gray-500 ml-1">
-                                  ({volunteer.review_count} reviews)
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="p-4 space-y-3">
-                            <div className="flex items-center text-sm text-gray-600">
-                              <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-                              {volunteer.city || "Location not specified"}
-                            </div>
-                            <div className="flex items-center text-sm text-gray-600">
-                              <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                              {formatAvailability(volunteer)}
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-700 mb-1">
-                                Services:
-                              </p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {volunteer.services &&
-                                  volunteer.services.map((service) => (
-                                    <Badge
-                                      key={service.id}
-                                      variant="outline"
-                                      className="bg-rose-50 border-rose-100 text-rose-800"
-                                    >
-                                      {service.name}
-                                    </Badge>
-                                  ))}
-                              </div>
-                            </div>
-                            <p className="text-sm text-gray-600 mt-2">
-                              {volunteer.bio}
-                            </p>
-                            <div className="flex justify-between pt-2">
+                          View All Volunteers
+                        </Button>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {filteredVolunteers.map((volunteer, index) => (
+                        <Card
+                          key={volunteer.id}
+                          className={`overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl ${
+                            animateCards
+                              ? "animate-in fade-in slide-in-from-bottom-8"
+                              : "opacity-0"
+                          } ${
+                            volunteer.gender === "male"
+                              ? "bg-gradient-to-br from-white to-blue-50"
+                              : "bg-gradient-to-br from-white to-rose-50"
+                          }`}
+                          style={{ animationDelay: `${index * 100}ms` }}
+                        >
+                          <CardHeader>
+                            <CardTitle className="text-xl font-semibold flex items-center justify-between">
+                              {volunteer.first_name} {volunteer.last_name}
                               <Button
                                 variant="ghost"
-                                size="sm"
-                                className={`rounded-lg ${
-                                  volunteer.isFavorite
-                                    ? "text-rose-600"
-                                    : "text-gray-400"
-                                } hover:text-rose-600 hover:bg-rose-50`}
-                                onClick={() => {
+                                size="icon"
+                                className="hover:bg-gray-100 rounded-full p-2 -mr-2"
+                                onClick={() =>
                                   toggleFavorite(
                                     volunteer.id,
                                     volunteer.isFavorite || false
-                                  );
-                                }}
+                                  )
+                                }
                               >
-                                <Heart
-                                  className={`h-5 w-5 ${
-                                    volunteer.isFavorite ? "fill-rose-600" : ""
-                                  }`}
-                                />
+                                {volunteer.isFavorite ? (
+                                  <Heart className="h-5 w-5 text-rose-500 fill-rose-500" />
+                                ) : (
+                                  <Heart className="h-5 w-5 text-gray-400" />
+                                )}
                               </Button>
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="flex items-center space-x-4">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage
+                                src={volunteer.profile_image_url || ""}
+                                alt={volunteer.first_name}
+                              />
+                              <AvatarFallback>
+                                {volunteer.first_name[0]}
+                                {volunteer.last_name[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="flex items-center gap-1">
+                                <Star className="h-4 w-4 text-amber-500" />
+                                <span className="text-sm font-medium text-gray-700">
+                                  {volunteer.rating || "0"}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  ({volunteer.review_count} reviews)
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-500">
+                                {volunteer.city}
+                              </p>
+                            </div>
+                          </CardContent>
+                          <CardContent>
+                            <p className="text-sm text-gray-700">
+                              {volunteer.bio}
+                            </p>
+                            <div className="mt-4">
+                              <h4 className="text-sm font-medium text-gray-800">
+                                Services:
+                              </h4>
+                              <ul className="list-disc list-inside text-sm text-gray-600">
+                                {volunteer.services.map((service) => (
+                                  <li key={service.id}>{service.name}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div className="mt-4">
+                              <h4 className="text-sm font-medium text-gray-800">
+                                Availability:
+                              </h4>
+                              <p className="text-sm text-gray-600">
+                                {formatAvailability(volunteer)}
+                              </p>
+                            </div>
+                          </CardContent>
+                          <CardFooter className="flex justify-between items-center">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => openReviewsModal(volunteer)}
+                            >
+                              <MessageCircle className="w-4 h-4 mr-2" />
+                              Reviews
+                            </Button>
+                            {currentRole === "elder" && (
                               <Button
                                 size="sm"
-                                className="rounded-lg bg-rose-600 hover:bg-rose-700"
-                                onClick={() => {
-                                  setShowMatchModal(false);
-                                  openRequestModal(volunteer);
-                                }}
+                                onClick={() => openRequestModal(volunteer)}
                               >
                                 Request Help
                               </Button>
-                            </div>
-                          </div>
-                        </div>
+                            )}
+                          </CardFooter>
+                        </Card>
                       ))}
                     </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-center pt-0 relative z-10">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowMatchModal(false)}
-                      className="border-rose-200 text-rose-700 hover:bg-rose-50"
-                    >
-                      Close
-                    </Button>
-                  </CardFooter>
-                </Card>
+                  </>
+                )}
+              </TabsContent>
+
+              <TabsContent value="requests">
+                <p>This is where the requests or offers will be displayed.</p>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </main>
+      </div>
+      <Dialog open={showReviewsModal} onOpenChange={setShowReviewsModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Volunteer Reviews</DialogTitle>
+            <DialogDescription>See what others are saying.</DialogDescription>
+          </DialogHeader>
+          {selectedVolunteer && (
+            <div className="flex items-center space-x-4 mb-4">
+              <Avatar className="h-10 w-10">
+                <AvatarImage
+                  src={selectedVolunteer.profile_image_url || ""}
+                  alt={selectedVolunteer.first_name}
+                />
+                <AvatarFallback>
+                  {selectedVolunteer.first_name[0]}
+                  {selectedVolunteer.last_name[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 text-amber-500" />
+                  <span className="text-sm font-medium text-gray-700">
+                    {selectedVolunteer.rating || "0"}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    ({selectedVolunteer.review_count} reviews)
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500">
+                  {selectedVolunteer.first_name} {selectedVolunteer.last_name}
+                </p>
               </div>
             </div>
           )}
-
-          {/* Reviews Modal */}
-          <Dialog open={showReviewsModal} onOpenChange={setShowReviewsModal}>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-yellow-500" />
-                  Reviews for {selectedVolunteer?.first_name}{" "}
-                  {selectedVolunteer?.last_name}
-                </DialogTitle>
-                <DialogDescription>
-                  {selectedVolunteer?.review_count} reviews with an average
-                  rating of{" "}
-                  {selectedVolunteer?.rating
-                    ? Number.parseFloat(selectedVolunteer.rating).toFixed(1)
-                    : "0"}{" "}
-                  out of 5
-                </DialogDescription>
-              </DialogHeader>
-
-              {isLoadingReviews ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-rose-500 mr-2" />
-                  <p>Loading reviews...</p>
-                </div>
-              ) : reviews.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">
-                    No reviews yet for this volunteer.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4 my-4">
-                  {reviews.map((review, index) => (
-                    <div
-                      key={index}
-                      className="border border-gray-100 rounded-lg p-4 bg-gray-50"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="flex mb-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
-                                key={star}
-                                className={`h-4 w-4 ${
-                                  star <= review.rating
-                                    ? "text-yellow-500"
-                                    : "text-gray-300"
-                                }`}
-                                fill={
-                                  star <= review.rating
-                                    ? "currentColor"
-                                    : "none"
-                                }
-                              />
-                            ))}
-                          </div>
-                          <p className="font-medium text-sm">
-                            {review.elder_first_name} {review.elder_last_name}
-                          </p>
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          {formatDate(review.created_at)}
-                        </p>
-                      </div>
-                      <p className="text-gray-700 text-sm">{review.comment}</p>
+          {isLoadingReviews ? (
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : (
+            <ul className="space-y-4">
+              {reviews.map((review) => (
+                <li key={review.id} className="border rounded-md p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-1">
+                      {[...Array(review.rating)].map((_, i) => (
+                        <Star key={i} className="h-4 w-4 text-amber-500" />
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {currentRole === "elder" && (
-                <>
-                  <div className="border-t border-gray-100 pt-4 mt-4">
-                    <h4 className="font-medium text-gray-900 mb-3">
-                      Leave a Review
-                    </h4>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="rating" className="block mb-2">
-                          Rating
-                        </Label>
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              type="button"
-                              onClick={() =>
-                                setNewReview({ ...newReview, rating: star })
-                              }
-                              className="focus:outline-none"
-                            >
-                              <Star
-                                className={`h-6 w-6 ${
-                                  star <= newReview.rating
-                                    ? "text-yellow-500"
-                                    : "text-gray-300"
-                                }`}
-                                fill={
-                                  star <= newReview.rating
-                                    ? "currentColor"
-                                    : "none"
-                                }
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="comment" className="block mb-2">
-                          Comment
-                        </Label>
-                        <Textarea
-                          id="comment"
-                          placeholder="Share your experience with this volunteer..."
-                          value={newReview.comment}
-                          onChange={(e: { target: { value: any } }) =>
-                            setNewReview({
-                              ...newReview,
-                              comment: e.target.value,
-                            })
-                          }
-                          className="w-full"
-                          rows={3}
-                        />
-                      </div>
-                    </div>
+                    <span className="text-xs text-gray-500">
+                      {formatDate(review.created_at)}
+                    </span>
                   </div>
-
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowReviewsModal(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={submitReview}
-                      className="bg-rose-600 hover:bg-rose-700"
-                      disabled={isSubmittingReview}
-                    >
-                      {isSubmittingReview ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Submitting...
-                        </>
-                      ) : (
-                        "Submit Review"
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </>
-              )}
-            </DialogContent>
-          </Dialog>
-
-          {/* Request Help Modal */}
-          <Dialog open={showRequestModal} onOpenChange={setShowRequestModal}>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Request Help</DialogTitle>
-                <DialogDescription>
-                  Fill out the form below to request help from{" "}
-                  {requestVolunteer?.first_name} {requestVolunteer?.last_name}.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4 py-2">
-                {/* Service Selection */}
-                <div className="space-y-2">
-                  <Label htmlFor="service">
-                    Service Type <span className="text-rose-500">*</span>
-                  </Label>
-                  {isLoadingServices ? (
-                    <div className="flex items-center space-x-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-rose-500" />
-                      <span className="text-sm text-gray-500">
-                        Loading services...
-                      </span>
-                    </div>
-                  ) : (
-                    <Select
-                      value={requestFormData.service_id?.toString() || ""}
-                      onValueChange={(value: string) =>
-                        setRequestFormData({
-                          ...requestFormData,
-                          service_id: Number.parseInt(value),
-                        })
-                      }
-                    >
-                      <SelectTrigger
-                        className={
-                          formErrors.service_id
-                            ? "border-rose-500 focus:ring-rose-500"
-                            : ""
-                        }
-                      >
-                        <SelectValue placeholder="Select a service" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {services.map((service) => (
-                          <SelectItem
-                            key={service.id}
-                            value={service.id.toString()}
-                          >
-                            {service.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {formErrors.service_id && (
-                    <p className="text-sm text-rose-500 flex items-center mt-1">
-                      <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                      {formErrors.service_id}
-                    </p>
-                  )}
-                </div>
-
-                {/* Day of Week */}
-                <div className="space-y-2">
-                  <Label htmlFor="day_of_week">
-                    Day of Week <span className="text-rose-500">*</span>
-                  </Label>
-                  <Select
-                    value={requestFormData.day_of_week}
-                    onValueChange={(value: any) =>
-                      setRequestFormData({
-                        ...requestFormData,
-                        day_of_week: value,
-                      })
-                    }
-                  >
-                    <SelectTrigger
-                      className={
-                        formErrors.day_of_week
-                          ? "border-rose-500 focus:ring-rose-500"
-                          : ""
-                      }
-                    >
-                      <SelectValue placeholder="Select a day" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="monday">Monday</SelectItem>
-                      <SelectItem value="tuesday">Tuesday</SelectItem>
-                      <SelectItem value="wednesday">Wednesday</SelectItem>
-                      <SelectItem value="thursday">Thursday</SelectItem>
-                      <SelectItem value="friday">Friday</SelectItem>
-                      <SelectItem value="saturday">Saturday</SelectItem>
-                      <SelectItem value="sunday">Sunday</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {formErrors.day_of_week && (
-                    <p className="text-sm text-rose-500 flex items-center mt-1">
-                      <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                      {formErrors.day_of_week}
-                    </p>
-                  )}
-                </div>
-
-                {/* Time of Day */}
-                <div className="space-y-2">
-                  <Label htmlFor="time_of_day">
-                    Time of Day <span className="text-rose-500">*</span>
-                  </Label>
-                  <Select
-                    value={requestFormData.time_of_day}
-                    onValueChange={(value: any) =>
-                      setRequestFormData({
-                        ...requestFormData,
-                        time_of_day: value,
-                      })
-                    }
-                  >
-                    <SelectTrigger
-                      className={
-                        formErrors.time_of_day
-                          ? "border-rose-500 focus:ring-rose-500"
-                          : ""
-                      }
-                    >
-                      <SelectValue placeholder="Select a time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="morning">Morning</SelectItem>
-                      <SelectItem value="afternoon">Afternoon</SelectItem>
-                      <SelectItem value="evening">Evening</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {formErrors.time_of_day && (
-                    <p className="text-sm text-rose-500 flex items-center mt-1">
-                      <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                      {formErrors.time_of_day}
-                    </p>
-                  )}
-                </div>
-
-                {/* Details */}
-                <div className="space-y-2">
-                  <Label htmlFor="details">
-                    Details <span className="text-rose-500">*</span>
-                  </Label>
-                  <Textarea
-                    id="details"
-                    placeholder="Please provide details about your request..."
-                    value={requestFormData.details}
-                    onChange={(e: { target: { value: any } }) =>
-                      setRequestFormData({
-                        ...requestFormData,
-                        details: e.target.value,
-                      })
-                    }
-                    className={
-                      formErrors.details
-                        ? "border-rose-500 focus:ring-rose-500"
-                        : ""
-                    }
-                    rows={4}
+                  <p className="text-sm text-gray-700">{review.comment}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <h4 className="text-lg font-medium text-gray-900 mb-3">
+              Add a Review
+            </h4>
+            <div className="flex items-center space-x-3 mb-3">
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <Button
+                  key={rating}
+                  variant="ghost"
+                  className={`p-1 rounded-full hover:bg-gray-100 ${
+                    newReview.rating === rating ? "bg-gray-100" : ""
+                  }`}
+                  onClick={() => setNewReview({ ...newReview, rating: rating })}
+                >
+                  <Star
+                    className={`h-5 w-5 ${
+                      newReview.rating === rating
+                        ? "text-amber-500"
+                        : "text-gray-400"
+                    }`}
                   />
-                  {formErrors.details && (
-                    <p className="text-sm text-rose-500 flex items-center mt-1">
-                      <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                      {formErrors.details}
-                    </p>
-                  )}
-                </div>
-
-                {/* Urgent */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="urgent"
-                    checked={requestFormData.urgent}
-                    onCheckedChange={(checked: boolean) =>
-                      setRequestFormData({
-                        ...requestFormData,
-                        urgent: checked === true,
-                      })
-                    }
-                  />
-                  <Label
-                    htmlFor="urgent"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    This is an urgent request
-                  </Label>
-                </div>
+                </Button>
+              ))}
+            </div>
+            <Textarea
+              placeholder="Write your review here..."
+              className="bg-gray-50 border-gray-100 rounded-md"
+              value={newReview.comment}
+              onChange={(e) =>
+                setNewReview({ ...newReview, comment: e.target.value })
+              }
+            />
+            <DialogFooter>
+              <Button
+                type="submit"
+                onClick={submitReview}
+                disabled={isSubmittingReview}
+              >
+                {isSubmittingReview ? (
+                  <>
+                    Submitting...
+                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  </>
+                ) : (
+                  "Submit Review"
+                )}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={showRequestModal} onOpenChange={setShowRequestModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Request Help</DialogTitle>
+            <DialogDescription>
+              Request help from this volunteer.
+            </DialogDescription>
+          </DialogHeader>
+          {requestVolunteer && (
+            <div className="flex items-center space-x-4 mb-4">
+              <Avatar className="h-10 w-10">
+                <AvatarImage
+                  src={requestVolunteer.profile_image_url || ""}
+                  alt={requestVolunteer.first_name}
+                />
+                <AvatarFallback>
+                  {requestVolunteer.first_name[0]}
+                  {requestVolunteer.last_name[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium text-gray-700">
+                  {requestVolunteer.first_name} {requestVolunteer.last_name}
+                </p>
+                <p className="text-sm text-gray-500">{requestVolunteer.city}</p>
               </div>
-
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowRequestModal(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={submitHelpRequest}
-                  className="bg-rose-600 hover:bg-rose-700"
-                  disabled={isSubmittingRequest}
-                >
-                  {isSubmittingRequest ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting...
-                    </>
+            </div>
+          )}
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="service">Service</Label>
+              <Select
+                onValueChange={(value) =>
+                  setRequestFormData({
+                    ...requestFormData,
+                    service_id: Number.parseInt(value),
+                  })
+                }
+              >
+                <SelectTrigger className="bg-gray-50 border-gray-100 rounded-md">
+                  <SelectValue placeholder="Select a service" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingServices ? (
+                    <SelectItem value="-1" disabled>
+                      Loading...
+                    </SelectItem>
                   ) : (
-                    "Submit Request"
+                    services.map((service) => (
+                      <SelectItem
+                        key={service.id}
+                        value={service.id.toString()}
+                      >
+                        {service.name}
+                      </SelectItem>
+                    ))
                   )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </main>
-      </div>
+                </SelectContent>
+              </Select>
+              {formErrors.service_id && (
+                <p className="text-red-500 text-sm mt-1">
+                  {formErrors.service_id}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="day">Day of the week</Label>
+              <Select
+                onValueChange={(value) =>
+                  setRequestFormData({ ...requestFormData, day_of_week: value })
+                }
+              >
+                <SelectTrigger className="bg-gray-50 border-gray-100 rounded-md">
+                  <SelectValue placeholder="Select a day" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[
+                    "monday",
+                    "tuesday",
+                    "wednesday",
+                    "thursday",
+                    "friday",
+                    "saturday",
+                    "sunday",
+                  ].map((day) => (
+                    <SelectItem key={day} value={day}>
+                      {day.charAt(0).toUpperCase() + day.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {formErrors.day_of_week && (
+                <p className="text-red-500 text-sm mt-1">
+                  {formErrors.day_of_week}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="time">Time of day</Label>
+              <Select
+                onValueChange={(value) =>
+                  setRequestFormData({ ...requestFormData, time_of_day: value })
+                }
+              >
+                <SelectTrigger className="bg-gray-50 border-gray-100 rounded-md">
+                  <SelectValue placeholder="Select a time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {["morning", "afternoon", "evening"].map((time) => (
+                    <SelectItem key={time} value={time}>
+                      {time.charAt(0).toUpperCase() + time.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {formErrors.time_of_day && (
+                <p className="text-red-500 text-sm mt-1">
+                  {formErrors.time_of_day}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="details">Details</Label>
+              <Textarea
+                id="details"
+                placeholder="Please provide details about your request."
+                className="bg-gray-50 border-gray-100 rounded-md"
+                value={requestFormData.details}
+                onChange={(e) =>
+                  setRequestFormData({
+                    ...requestFormData,
+                    details: e.target.value,
+                  })
+                }
+              />
+              {formErrors.details && (
+                <p className="text-red-500 text-sm mt-1">
+                  {formErrors.details}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="urgent"
+                checked={requestFormData.urgent}
+                onCheckedChange={(checked) =>
+                  setRequestFormData({
+                    ...requestFormData,
+                    urgent: Boolean(checked),
+                  })
+                }
+              />
+              <Label htmlFor="urgent">Urgent</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="submit"
+              onClick={submitHelpRequest}
+              disabled={isSubmittingRequest}
+            >
+              {isSubmittingRequest ? (
+                <>
+                  Submitting...
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                </>
+              ) : (
+                "Submit Request"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -270,9 +270,8 @@ export default function RequestsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="min-h-screen container mx-auto px-4 py-8 max-w-6xl">
       <div className="flex flex-col space-y-6">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Requests</h1>

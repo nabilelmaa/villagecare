@@ -23,7 +23,7 @@ export default function Header() {
   const { userData, currentRole } = useUserData();
   const { logout, isAuthenticated } = useAuth();
 
-  // check if we're on auth pages (login/register)
+  // checking if we're on auth pages (login/register)
   const isAuthPage =
     location.pathname === "/auth/login" ||
     location.pathname === "/auth/register";
@@ -35,6 +35,7 @@ export default function Header() {
     location.pathname.startsWith("/notifications") ||
     location.pathname.startsWith("/profile") ||
     location.pathname.startsWith("/favorites") ||
+    location.pathname.startsWith("/reviews") ||
     location.pathname.startsWith("/help");
 
   // checking if we're on the landing page
@@ -257,16 +258,6 @@ export default function Header() {
                     )}
                   </Badge>
 
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-gray-500 hover:text-rose-700 relative"
-                  >
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
-                    <span className="sr-only">Notifications</span>
-                  </Button>
-
                   <UserDropdown />
                 </div>
               ) : (
@@ -331,16 +322,6 @@ export default function Header() {
                   </>
                 )}
               </Badge>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-gray-500 hover:text-rose-700 relative"
-              >
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
-                <span className="sr-only">Notifications</span>
-              </Button>
               <UserDropdown />
             </div>
           </div>

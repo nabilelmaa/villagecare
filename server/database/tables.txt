@@ -8,7 +8,7 @@ CREATE TABLE users (
     phone_number VARCHAR(20),
     city TEXT,
     bio TEXT,
-    gender VARCHAR(10);
+    gender VARCHAR(10),
     profile_image_url VARCHAR(255),
     rating DECIMAL(3, 2),
     review_count INTEGER DEFAULT 0,

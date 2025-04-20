@@ -140,7 +140,10 @@ const Notifications = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl min-h-screen">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Notifications</h2>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+          <p className="text-gray-500">See all your notifications here</p>
+        </div>
         {notifications.length > 0 && (
           <Button
             variant="outline"
@@ -161,12 +164,15 @@ const Notifications = () => {
       )}
 
       {notifications.length === 0 && !error ? (
-        <div className="text-center py-8">
+        <div className="bg-gray-50 rounded-xl p-8 text-center">
           <div className="mx-auto w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mb-4">
             <Bell className="h-8 w-8 text-rose-600" />
           </div>
-          <p className="text-gray-500 max-w-md mx-auto mb-6">
+          <h3 className="text-xl font-medium text-gray-900 mb-2">
             No notifications yet
+          </h3>
+          <p className="text-gray-500 max-w-md mx-auto mb-6">
+            Upon recieiving a new notification, it will be displayed here.
           </p>
         </div>
       ) : (

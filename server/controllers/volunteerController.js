@@ -55,14 +55,14 @@ export const getVolunteerMatches = async (req, res) => {
       `
         SELECT 
           u.gender AS elder_gender,
-          u.city,
+          LOWER(TRIM(u.city)) AS city,
           array_agg(DISTINCT us.service_id) AS elder_services,
           array_agg(DISTINCT a.day_of_week || '-' || a.time_of_day) AS elder_availability
         FROM users u
         LEFT JOIN user_services us ON u.id = us.user_id AND us.selected = true
         LEFT JOIN availability a ON u.id = a.user_id
         WHERE u.id = $1
-        GROUP BY u.id;
+        GROUP BY u.id
       `,
       [id]
     );
@@ -77,47 +77,46 @@ export const getVolunteerMatches = async (req, res) => {
     const elderGender = elder.elder_gender;
     const elderCity = elder.city;
 
-    // Step 2: Match volunteers
+    // Step 2: Match volunteers with enforced city match
     const matchQuery = await db.query(
       `
-SELECT 
-  u.id,
-  u.first_name,
-  u.last_name,
-  u.profile_image_url,
-  u.bio,
-  u.gender,
-  u.rating,
-  u.review_count,
-  u.city,
-  COALESCE(
-    json_agg(DISTINCT jsonb_build_object(
-      'id', s.id,
-      'name', s.name,
-      'description', s.description
-    )) FILTER (WHERE s.id IS NOT NULL), 
-    '[]'
-  ) AS services,
-  COALESCE(
-    json_agg(DISTINCT jsonb_build_object(
-      'day_of_week', a.day_of_week,
-      'time_of_day', a.time_of_day
-    )) FILTER (WHERE a.id IS NOT NULL), 
-    '[]'
-  ) AS availabilities
-FROM users u
-LEFT JOIN user_services us ON u.id = us.user_id AND us.selected = true
-LEFT JOIN services s ON us.service_id = s.id
-LEFT JOIN availability a ON u.id = a.user_id
-WHERE u.role = 'volunteer'
-  AND us.service_id = ANY($1)
-  AND (a.day_of_week || '-' || a.time_of_day) = ANY($2)
-  AND LOWER(TRIM(u.gender)) = LOWER(TRIM($3)) 
-  AND LOWER(TRIM(u.city)) = LOWER(TRIM($4)) 
-GROUP BY u.id
-ORDER BY u.rating DESC NULLS LAST;
-
-        `,
+        SELECT 
+          u.id,
+          u.first_name,
+          u.last_name,
+          u.profile_image_url,
+          u.bio,
+          u.gender,
+          u.rating,
+          u.review_count,
+          u.city,
+          COALESCE(
+            json_agg(DISTINCT jsonb_build_object(
+              'id', s.id,
+              'name', s.name,
+              'description', s.description
+            )) FILTER (WHERE s.id IS NOT NULL), 
+            '[]'
+          ) AS services,
+          COALESCE(
+            json_agg(DISTINCT jsonb_build_object(
+              'day_of_week', a.day_of_week,
+              'time_of_day', a.time_of_day
+            )) FILTER (WHERE a.id IS NOT NULL), 
+            '[]'
+          ) AS availabilities
+        FROM users u
+        JOIN user_services us ON u.id = us.user_id AND us.selected = true
+        JOIN availability a ON u.id = a.user_id
+        LEFT JOIN services s ON us.service_id = s.id
+        WHERE u.role = 'volunteer'
+          AND us.service_id = ANY($1)
+          AND (a.day_of_week || '-' || a.time_of_day) = ANY($2)
+          AND LOWER(TRIM(u.gender)) = LOWER(TRIM($3))
+          AND LOWER(TRIM(u.city)) = LOWER(TRIM($4))
+        GROUP BY u.id
+        ORDER BY u.rating DESC NULLS LAST
+      `,
       [elderServices, elderAvailability, elderGender, elderCity]
     );
 

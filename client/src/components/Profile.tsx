@@ -492,11 +492,8 @@ export default function ProfilePage() {
         throw new Error(errorData.message || "Failed to update profile");
       }
 
-      const data = await response.json();
       showToast("Profile updated successfully", "success");
 
-      // Update the user data in context if needed
-      // This depends on how your UserContext is set up
     } catch (error) {
       console.error("Error updating profile:", error);
       showToast(
@@ -558,7 +555,6 @@ export default function ProfilePage() {
     }
   };
 
-  // Function to update availability
   const handleUpdateAvailability = async () => {
     setIsUpdatingAvailability(true);
 
@@ -626,35 +622,15 @@ export default function ProfilePage() {
     return slot ? slot.selected : false;
   };
 
-  const helpRequests = [
-    {
-      id: 1,
-      service: "Grocery Shopping",
-      date: "May 15, 2023",
-      time: "10:00 AM - 12:00 PM",
-      status: "pending",
-      notes: "Need help with weekly grocery shopping. I have a list prepared.",
-    },
-    {
-      id: 2,
-      service: "Transportation",
-      date: "May 16, 2023",
-      time: "2:00 PM - 4:00 PM",
-      status: "accepted",
-      notes:
-        "Doctor's appointment at Memorial Hospital. Need transportation and company.",
-    },
-  ];
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      {/* Role Switcher */}
+
       <div className="mb-8">
         <RoleSwitcher />
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Profile Summary Card */}
+
         <div className="md:w-1/3">
           <Card className="border-0 shadow-lg rounded-2xl overflow-hidden">
             <div
@@ -791,13 +767,8 @@ export default function ProfilePage() {
               )}
 
               <div className="mt-6 pt-6 border-t border-gray-100">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-center items-center">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {currentRole === "elder"
-                        ? "Received Help"
-                        : "Completed Requests"}
-                    </p>
                     <p
                       className={`text-2xl font-bold ${
                         currentRole === "elder"
@@ -805,7 +776,6 @@ export default function ProfilePage() {
                           : "text-rose-600"
                       }`}
                     >
-                      {/* {user.completedRequests} */}
                     </p>
                   </div>
                   {currentRole === "volunteer" && (
