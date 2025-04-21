@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, type SetStateAction } from "react";
 import { Button } from "../components/ui/button";
 import {
@@ -556,6 +558,7 @@ export default function DashboardPage() {
       const token = localStorage.getItem("authToken");
       if (!token) {
         showToast("Please log in again", "error");
+        setReviews([]);
         return;
       }
 
@@ -575,10 +578,11 @@ export default function DashboardPage() {
       }
 
       const data = await response.json();
-      setReviews(data.reviews);
+      setReviews(data.reviews || []);
     } catch (error) {
       console.error("Error fetching reviews:", error);
       showToast("Failed to load reviews", "error");
+      setReviews([]);
     } finally {
       setIsLoadingReviews(false);
     }
@@ -929,8 +933,10 @@ export default function DashboardPage() {
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
                       >
+                        {/* Creative loading animation */}
                         <motion.div className="absolute inset-0 bg-gradient-to-r from-rose-700/30 to-pink-600/30" />
 
+                        {/* Hearts floating up animation */}
                         <div className="absolute inset-0 overflow-hidden">
                           {[...Array(8)].map((_, i) => (
                             <motion.div
@@ -1400,8 +1406,7 @@ export default function DashboardPage() {
                                   </span>
                                 </div>
                                 <p className="text-sm text-gray-500">
-                                  {volunteer.city[0].toUpperCase()}
-                                  {volunteer.city.slice(1)}
+                                  {volunteer.city}
                                 </p>
                               </div>
                             </div>
@@ -1507,21 +1512,30 @@ export default function DashboardPage() {
             </div>
           ) : (
             <ul className="space-y-4">
-              {reviews.map((review) => (
-                <li key={review.id} className="border rounded-md p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-1">
-                      {[...Array(review.rating)].map((_, i) => (
-                        <Star key={i} className="h-4 w-4 text-amber-500" />
-                      ))}
+              {reviews && reviews.length > 0 ? (
+                reviews.map((review, index) => (
+                  <li
+                    key={review.id || index}
+                    className="border rounded-md p-4"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1">
+                        {[...Array(review.rating)].map((_, i) => (
+                          <Star key={i} className="h-4 w-4 text-amber-500" />
+                        ))}
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {formatDate(review.created_at)}
+                      </span>
                     </div>
-                    <span className="text-xs text-gray-500">
-                      {formatDate(review.created_at)}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700">{review.comment}</p>
+                    <p className="text-sm text-gray-700">{review.comment}</p>
+                  </li>
+                ))
+              ) : (
+                <li className="text-center py-4 text-gray-500">
+                  No reviews available
                 </li>
-              ))}
+              )}
             </ul>
           )}
           <div className="mt-6 pt-6 border-t border-gray-100">
@@ -1558,6 +1572,7 @@ export default function DashboardPage() {
             />
             <DialogFooter>
               <Button
+                className="mt-2"
                 type="submit"
                 onClick={submitReview}
                 disabled={isSubmittingReview}
