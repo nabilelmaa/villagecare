@@ -33,7 +33,8 @@ CREATE TABLE user_services (
     service_id INTEGER REFERENCES services(id) ON DELETE CASCADE,
     selected BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE (user_id, service_id)
 );
 
 -- Availability table
