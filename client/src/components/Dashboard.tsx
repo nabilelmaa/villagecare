@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, type SetStateAction } from "react";
 import { Button } from "../components/ui/button";
 import {
