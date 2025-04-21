@@ -929,10 +929,8 @@ export default function DashboardPage() {
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
                       >
-                        {/* Creative loading animation */}
                         <motion.div className="absolute inset-0 bg-gradient-to-r from-rose-700/30 to-pink-600/30" />
 
-                        {/* Hearts floating up animation */}
                         <div className="absolute inset-0 overflow-hidden">
                           {[...Array(8)].map((_, i) => (
                             <motion.div
@@ -1402,7 +1400,8 @@ export default function DashboardPage() {
                                   </span>
                                 </div>
                                 <p className="text-sm text-gray-500">
-                                  {volunteer.city}
+                                  {volunteer.city[0].toUpperCase()}
+                                  {volunteer.city.slice(1)}
                                 </p>
                               </div>
                             </div>
