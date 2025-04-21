@@ -25,11 +25,12 @@ export interface Service {
 }
 
 export interface Review {
-  id: Key | null | undefined
+  id: number
   rating: number;
   comment: string;
   elder_first_name: string;
   elder_last_name: string;
+  elder_profile_picture: string;
   created_at: string;
 }
 

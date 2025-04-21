@@ -410,10 +410,6 @@ export default function DashboardPage() {
       errors.time_of_day = "Please select a time";
     }
 
-    if (!requestFormData.details.trim()) {
-      errors.details = "Please provide details about your request";
-    }
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -590,11 +586,6 @@ export default function DashboardPage() {
 
   const submitReview = async () => {
     if (!selectedVolunteer) return;
-
-    if (newReview.comment.trim() === "") {
-      showToast("Please add a comment to your review", "error");
-      return;
-    }
 
     setIsSubmittingReview(true);
     try {
@@ -933,10 +924,8 @@ export default function DashboardPage() {
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
                       >
-                        {/* Creative loading animation */}
                         <motion.div className="absolute inset-0 bg-gradient-to-r from-rose-700/30 to-pink-600/30" />
 
-                        {/* Hearts floating up animation */}
                         <div className="absolute inset-0 overflow-hidden">
                           {[...Array(8)].map((_, i) => (
                             <motion.div
@@ -1023,7 +1012,6 @@ export default function DashboardPage() {
                         ease: "linear",
                       }}
                     >
-                      {/* Circular arrangement of hearts */}
                       {[...Array(8)].map((_, i) => (
                         <motion.div
                           key={i}
@@ -1406,7 +1394,8 @@ export default function DashboardPage() {
                                   </span>
                                 </div>
                                 <p className="text-sm text-gray-500">
-                                  {volunteer.city}
+                                  {volunteer.city[0].toUpperCase()}
+                                  {volunteer.city.slice(1)}
                                 </p>
                               </div>
                             </div>
@@ -1469,7 +1458,7 @@ export default function DashboardPage() {
         </main>
       </div>
       <Dialog open={showReviewsModal} onOpenChange={setShowReviewsModal}>
-        <DialogContent className="w-[95vw] max-w-[425px] p-4 sm:p-6">
+        <DialogContent className="w-[95vw] max-w-[500px] p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl">
               Volunteer Reviews
@@ -1513,20 +1502,37 @@ export default function DashboardPage() {
           ) : (
             <ul className="space-y-4">
               {reviews && reviews.length > 0 ? (
-                reviews.map((review, index) => (
+                reviews.slice(0, 3).map((review, index) => (
                   <li
                     key={review.id || index}
                     className="border rounded-md p-4"
                   >
                     <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
+                          <AvatarImage
+                            src={review.elder_profile_picture || ""}
+                            alt={review.elder_first_name}
+                          />
+                          <AvatarFallback>
+                            {review.elder_first_name[0]}
+                            {review.elder_last_name[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">
+                            {review.elder_first_name} {review.elder_last_name}
+                          </p>
+                          <span className="text-xs text-gray-500">
+                            {formatDate(review.created_at)}
+                          </span>
+                        </div>
+                      </div>
                       <div className="flex items-center gap-1">
                         {[...Array(review.rating)].map((_, i) => (
                           <Star key={i} className="h-4 w-4 text-amber-500" />
                         ))}
                       </div>
-                      <span className="text-xs text-gray-500">
-                        {formatDate(review.created_at)}
-                      </span>
                     </div>
                     <p className="text-sm text-gray-700">{review.comment}</p>
                   </li>
@@ -1563,7 +1569,7 @@ export default function DashboardPage() {
               ))}
             </div>
             <Textarea
-              placeholder="Write your review here..."
+              placeholder="Add an optional comment here..."
               className="bg-gray-50 border-gray-100 rounded-md"
               value={newReview.comment}
               onChange={(e) =>
@@ -1616,7 +1622,11 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium text-gray-700">
                   {requestVolunteer.first_name} {requestVolunteer.last_name}
                 </p>
-                <p className="text-sm text-gray-500">{requestVolunteer.city}</p>
+                <p className="text-sm text-gray-500">
+                  {" "}
+                  {requestVolunteer.city[0].toUpperCase()}
+                  {requestVolunteer.city.slice(1)}
+                </p>
               </div>
             </div>
           )}
@@ -1714,7 +1724,7 @@ export default function DashboardPage() {
               )}
             </div>
             <div>
-              <Label htmlFor="details">Details</Label>
+              <Label htmlFor="details">Details(optional)</Label>
               <Textarea
                 id="details"
                 placeholder="Please provide details about your request."

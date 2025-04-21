@@ -8,7 +8,7 @@ export const getReviewsForVolunteer = async (req, res) => {
 
     const result = await db.query(
       `
-        SELECT r.rating, r.comment, u.first_name as elder_first_name, u.last_name as elder_last_name, r.created_at
+        SELECT r.rating, r.comment, u.first_name as elder_first_name, u.last_name as elder_last_name, u.profile_image_url as elder_profile_picture, r.created_at
         FROM reviews r
         JOIN users u ON r.elder_id = u.id
         WHERE r.volunteer_id = $1
@@ -21,7 +21,7 @@ export const getReviewsForVolunteer = async (req, res) => {
       return res.status(200).json({ reviews: [] });
     }
 
-    const reviews = reviewsResult.rows;
+    const reviews = result.rows;
 
     res.status(200).json({ reviews });
   } catch (error) {
