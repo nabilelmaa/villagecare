@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Button } from "../components/ui/button";
 import {
@@ -19,7 +17,6 @@ import {
 import { Badge } from "../components/ui/badge";
 import {
   Clock,
-  MessageCircle,
   Star,
   Filter,
   Search,
@@ -130,7 +127,7 @@ export default function RequestsPage() {
       const response = await fetch(
         `http://localhost:5000/api/requests/${requestId}/status`,
         {
-          method: "PATCH", // Using PATCH as specified
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -143,7 +140,6 @@ export default function RequestsPage() {
         throw new Error("Failed to update request status");
       }
 
-      // Get status verb for toast message
       let statusVerb = "";
       switch (status) {
         case "accepted":
@@ -164,14 +160,12 @@ export default function RequestsPage() {
 
       showToast(`Request ${statusVerb} successfully`, "success");
 
-      // Update local state
       setRequests((prevRequests) =>
         prevRequests.map((req) =>
           req.id === requestId ? { ...req, status } : req
         )
       );
 
-      // Refresh requests to get the latest data
       fetchRequests();
     } catch (error) {
       console.error("Error updating request status:", error);
@@ -596,14 +590,6 @@ export default function RequestsPage() {
                           )}
                         </>
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50"
-                      >
-                        <MessageCircle className="h-4 w-4 mr-1.5" />
-                        Message
-                      </Button>
                     </CardFooter>
                   </Card>
                 ))}
