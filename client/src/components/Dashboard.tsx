@@ -519,10 +519,7 @@ export default function DashboardPage() {
             const errorData = await volunteersResponse.json().catch(() => ({}));
             throw new Error(
               errorData.message ||
-                `Server=>({}));
-            throw new Error(
-              errorData.message ||
-                \`Server responded with status: ${volunteersResponse.status}`
+                `Server responded with status: ${volunteersResponse.status}`
             );
           }
 
@@ -1421,8 +1418,12 @@ export default function DashboardPage() {
                                   alt={volunteer.first_name}
                                 />
                                 <AvatarFallback>
-                                  {volunteer.first_name[0]}
-                                  {volunteer.last_name[0]}
+                                  {volunteer.first_name
+                                    ? volunteer.first_name[0]
+                                    : ""}
+                                  {volunteer.last_name
+                                    ? volunteer.last_name[0]
+                                    : ""}
                                 </AvatarFallback>
                               </Avatar>
                               <div>
@@ -1437,8 +1438,11 @@ export default function DashboardPage() {
                                   </span>
                                 </div>
                                 <p className="text-sm text-gray-500">
-                                  {volunteer.city[0].toUpperCase()}
-                                  {volunteer.city.slice(1)}
+                                  {volunteer.city
+                                    ? `${volunteer.city[0].toUpperCase()}${volunteer.city.slice(
+                                        1
+                                      )}`
+                                    : ""}
                                 </p>
                               </div>
                             </div>
@@ -1520,8 +1524,12 @@ export default function DashboardPage() {
                   alt={selectedVolunteer.first_name}
                 />
                 <AvatarFallback>
-                  {selectedVolunteer.first_name[0]}
-                  {selectedVolunteer.last_name[0]}
+                  {selectedVolunteer.first_name
+                    ? selectedVolunteer.first_name[0]
+                    : ""}
+                  {selectedVolunteer.last_name
+                    ? selectedVolunteer.last_name[0]
+                    : ""}
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -1560,8 +1568,12 @@ export default function DashboardPage() {
                             alt={review.elder_first_name}
                           />
                           <AvatarFallback>
-                            {review.elder_first_name[0]}
-                            {review.elder_last_name[0]}
+                            {review.elder_first_name
+                              ? review.elder_first_name[0]
+                              : ""}
+                            {review.elder_last_name
+                              ? review.elder_last_name[0]
+                              : ""}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -1659,8 +1671,12 @@ export default function DashboardPage() {
                   alt={requestVolunteer.first_name}
                 />
                 <AvatarFallback>
-                  {requestVolunteer.first_name[0]}
-                  {requestVolunteer.last_name[0]}
+                  {requestVolunteer.first_name
+                    ? requestVolunteer.first_name[0]
+                    : ""}
+                  {requestVolunteer.last_name
+                    ? requestVolunteer.last_name[0]
+                    : ""}
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -1669,8 +1685,11 @@ export default function DashboardPage() {
                 </p>
                 <p className="text-sm text-gray-500">
                   {" "}
-                  {requestVolunteer.city[0].toUpperCase()}
-                  {requestVolunteer.city.slice(1)}
+                  {requestVolunteer.city
+                    ? `${requestVolunteer.city[0].toUpperCase()}${requestVolunteer.city.slice(
+                        1
+                      )}`
+                    : ""}
                 </p>
               </div>
             </div>
