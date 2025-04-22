@@ -3,7 +3,7 @@ import { ToastProps } from "../../types/index";
 export const ToastError = ({ body }: ToastProps) => {
   return (
     <div
-      className="bg-red-500 text-white tracking-wide flex items-center w-max max-w-sm p-3 rounded-xl shadow-red-200"
+      className="bg-red-500 rounded-sm text-white tracking-wide flex items-center w-max max-w-sm p-3 shadow-red-200"
       role="alert"
     >
       <svg

@@ -1,26 +1,27 @@
 import { Button } from "../components/ui/button";
+import { useTranslation } from "react-i18next";
 
 export default function TestimonialsSection() {
+  const { t } = useTranslation();
+
   return (
     <section
       id="testimonials"
       className="w-full py-20 md:py-32 relative overflow-hidden"
     >
-      {/* Decorative elements */}
       <div className="absolute inset-0 bg-[url('/placeholder.svg?height=100&width=100')] bg-repeat opacity-5"></div>
       <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-rose-50 to-transparent"></div>
 
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="flex flex-col items-center justify-center space-y-4 text-center max-w-3xl mx-auto mb-16">
           <div className="inline-block px-4 py-1.5 bg-rose-100 text-rose-800 rounded-full text-sm font-medium">
-            Hear Their Stories
+            {t("landing.testimonials.tagline")}
           </div>
           <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-rose-900 to-rose-700">
-            Lives Transformed Through Connection
+            {t("landing.testimonials.title")}
           </h2>
           <p className="text-gray-600 md:text-xl/relaxed">
-            Real stories from elders and volunteers who have experienced the
-            VillageCare difference.
+            {t("landing.testimonials.description")}
           </p>
         </div>
 
@@ -42,18 +43,18 @@ export default function TestimonialsSection() {
                   ))}
                 </div>
                 <p className="text-gray-600 italic text-lg">
-                  "VillageCare has been a blessing. My volunteer Sarah comes by
-                  twice a week to help with groceries and just to chat. It's
-                  made such a difference in my life."
+                  {t("landing.testimonials.testimonial1.quote")}
                 </p>
                 <div className="flex items-center space-x-4 pt-4 border-t border-rose-100">
                   <div className="rounded-full bg-rose-100 h-14 w-14 flex items-center justify-center text-rose-700 font-bold text-lg">
                     MA
                   </div>
                   <div>
-                    <p className="font-medium">Meryem, AB</p>
+                    <p className="font-medium">
+                      {t("landing.testimonials.testimonial1.name")}
+                    </p>
                     <p className="text-sm text-gray-500">
-                      Elder • Member for 1 year
+                      {t("landing.testimonials.testimonial1.role")}
                     </p>
                   </div>
                 </div>
@@ -78,33 +79,24 @@ export default function TestimonialsSection() {
                   ))}
                 </div>
                 <p className="text-gray-600 italic text-lg">
-                  "Volunteering through VillageCare has been incredibly
-                  rewarding. I've formed a wonderful friendship with Mr.
-                  Salah, and I look forward to our weekly walks."
+                  {t("landing.testimonials.testimonial2.quote")}
                 </p>
                 <div className="flex items-center space-x-4 pt-4 border-t border-rose-100">
                   <div className="rounded-full bg-rose-100 h-14 w-14 flex items-center justify-center text-rose-700 font-bold text-lg">
                     NE
                   </div>
                   <div>
-                    <p className="font-medium">Nabil, EL</p>
+                    <p className="font-medium">
+                      {t("landing.testimonials.testimonial2.name")}
+                    </p>
                     <p className="text-sm text-gray-500">
-                      Volunteer • Member for 2 years
+                      {t("landing.testimonials.testimonial2.role")}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="flex justify-center mt-12">
-          <Button
-            variant="outline"
-            className="border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl px-6"
-          >
-            Read More Stories
-          </Button>
         </div>
       </div>
     </section>

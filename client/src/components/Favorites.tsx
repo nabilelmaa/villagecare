@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -67,6 +68,8 @@ interface Service {
 }
 
 export default function FavoritesPage() {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === "ar";
   const [favorites, setFavorites] = useState<Volunteer[]>([]);
   const [filteredFavorites, setFilteredFavorites] = useState<Volunteer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,7 +78,6 @@ export default function FavoritesPage() {
 
   const { showToast } = useToast();
 
-  // Add these state variables inside the FavoritesPage component
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestVolunteer, setRequestVolunteer] = useState<Volunteer | null>(
     null
@@ -98,7 +100,6 @@ export default function FavoritesPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
 
-  // Add these state variables after the other state declarations
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(
     null
   );
@@ -135,7 +136,7 @@ export default function FavoritesPage() {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        showToast("Please log in again", "error");
+        showToast(t("common.loginAgain"), "error");
         setIsLoading(false);
         return;
       }
@@ -149,7 +150,7 @@ export default function FavoritesPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch favorites");
+        throw new Error(t("favorites.fetchFailed"));
       }
 
       const data = await response.json();
@@ -160,7 +161,7 @@ export default function FavoritesPage() {
     } catch (error) {
       console.error("Error fetching favorites:", error);
       showToast(
-        error instanceof Error ? error.message : "Failed to load favorites",
+        error instanceof Error ? error.message : t("favorites.fetchFailed"),
         "error"
       );
     } finally {
@@ -172,7 +173,7 @@ export default function FavoritesPage() {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        showToast("Please log in again", "error");
+        showToast(t("common.loginAgain"), "error");
         return;
       }
 
@@ -188,10 +189,10 @@ export default function FavoritesPage() {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to remove from favorites");
+        throw new Error(t("favorites.removeFailed"));
       }
 
-      showToast("Removed from favorites", "success");
+      showToast(t("favorites.removedFromFavorites"), "success");
 
       setFavorites((prevFavorites) =>
         prevFavorites.filter((favorite) => favorite.id !== volunteerId)
@@ -199,9 +200,7 @@ export default function FavoritesPage() {
     } catch (error) {
       console.error("Error removing from favorites:", error);
       showToast(
-        error instanceof Error
-          ? error.message
-          : "An error occurred while removing from favorites",
+        error instanceof Error ? error.message : t("favorites.removeFailed"),
         "error"
       );
     }
@@ -209,7 +208,7 @@ export default function FavoritesPage() {
 
   const formatAvailability = (volunteer: Volunteer): string => {
     if (!volunteer.availabilities || volunteer.availabilities.length === 0) {
-      return "Availability not specified";
+      return t("favorites.availabilityNotSpecified");
     }
 
     const days = new Set(volunteer.availabilities.map((a) => a.day_of_week));
@@ -218,20 +217,16 @@ export default function FavoritesPage() {
     let availabilityText = "";
 
     if (days.size > 0) {
-      const daysList = Array.from(days).map(
-        (day) => day.charAt(0).toUpperCase() + day.slice(1)
-      );
+      const daysList = Array.from(days).map((day) => t(`days.${day}`));
       availabilityText += daysList.join(", ");
     }
 
     if (times.size > 0) {
-      const timesList = Array.from(times).map(
-        (time) => time.charAt(0).toUpperCase() + time.slice(1)
-      );
+      const timesList = Array.from(times).map((time) => t(`timeOfDay.${time}`));
       availabilityText += " (" + timesList.join(", ") + ")";
     }
 
-    return availabilityText || "Availability not specified";
+    return availabilityText || t("favorites.availabilityNotSpecified");
   };
 
   const fetchServices = async () => {
@@ -239,7 +234,7 @@ export default function FavoritesPage() {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        showToast("Please log in again", "error");
+        showToast(t("common.loginAgain"), "error");
         return;
       }
 
@@ -252,14 +247,14 @@ export default function FavoritesPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch services");
+        throw new Error(t("favorites.servicesFetchFailed"));
       }
 
       const data = await response.json();
       setServices(data.services);
     } catch (error) {
       console.error("Error fetching services:", error);
-      showToast("Failed to load services", "error");
+      showToast(t("favorites.servicesFetchFailed"), "error");
     } finally {
       setIsLoadingServices(false);
     }
@@ -289,19 +284,19 @@ export default function FavoritesPage() {
     } = {};
 
     if (!requestFormData.service_id) {
-      errors.service_id = "Please select a service";
+      errors.service_id = t("favorites.selectService");
     }
 
     if (!requestFormData.day_of_week) {
-      errors.day_of_week = "Please select a day";
+      errors.day_of_week = t("favorites.selectDay");
     }
 
     if (!requestFormData.time_of_day) {
-      errors.time_of_day = "Please select a time";
+      errors.time_of_day = t("favorites.selectTime");
     }
 
     if (!requestFormData.details.trim()) {
-      errors.details = "Please provide details about your request";
+      errors.details = t("favorites.provideDetails");
     }
 
     setFormErrors(errors);
@@ -317,7 +312,7 @@ export default function FavoritesPage() {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        showToast("Please log in again", "error");
+        showToast(t("common.loginAgain"), "error");
         return;
       }
 
@@ -332,17 +327,15 @@ export default function FavoritesPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to submit request");
+        throw new Error(errorData.message || t("favorites.requestFailed"));
       }
 
-      showToast("Help request submitted successfully", "success");
+      showToast(t("favorites.requestSubmitted"), "success");
       setShowRequestModal(false);
     } catch (error) {
       console.error("Error submitting help request:", error);
       showToast(
-        error instanceof Error
-          ? error.message
-          : "An error occurred while submitting your request",
+        error instanceof Error ? error.message : t("favorites.requestFailed"),
         "error"
       );
     } finally {
@@ -350,7 +343,7 @@ export default function FavoritesPage() {
     }
   };
 
-  // Add this function before the return statement
+
   const openReviewsModal = (volunteer: Volunteer) => {
     setSelectedVolunteer(volunteer);
     setShowReviewsModal(true);
@@ -362,7 +355,7 @@ export default function FavoritesPage() {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        showToast("Please log in again", "error");
+        showToast(t("common.loginAgain"), "error");
         return;
       }
 
@@ -378,28 +371,19 @@ export default function FavoritesPage() {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch reviews");
+        throw new Error(t("favorites.reviewsFetchFailed"));
       }
 
       const data = await response.json();
       setReviews(data.reviews);
     } catch (error) {
       console.error("Error fetching reviews:", error);
-      showToast("Failed to load reviews", "error");
+      showToast(t("favorites.reviewsFetchFailed"), "error");
     } finally {
       setIsLoadingReviews(false);
     }
   };
 
-  // Add the formatDate function
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
 
   if (isLoading) {
     return (
@@ -407,7 +391,7 @@ export default function FavoritesPage() {
         <div className="text-center">
           <Loader2 className="mx-auto h-12 w-12 animate-spin text-rose-600" />
           <p className="mt-4 text-lg font-medium text-gray-700">
-            Loading favorites...
+            {t("favorites.loading")}
           </p>
         </div>
       </div>
@@ -419,17 +403,23 @@ export default function FavoritesPage() {
       <div className="flex flex-col space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            My Favorite Volunteers
+            {t("favorites.title")}
           </h1>
-          <p className="text-gray-500">Manage your saved volunteers</p>
+          <p className="text-gray-500">{t("favorites.subtitle")}</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-md p-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Search
+              className={`absolute ${
+                isRTL ? "right-3" : "left-3"
+              } top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5`}
+            />
             <Input
-              placeholder="Search your favorites..."
-              className="pl-10 py-6 bg-gray-50 border-gray-100 rounded-xl"
+              placeholder={t("favorites.searchPlaceholder")}
+              className={`${
+                isRTL ? "pr-10" : "pl-10"
+              } py-6 bg-gray-50 border-gray-100 rounded-xl`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -442,12 +432,14 @@ export default function FavoritesPage() {
               <Heart className="h-8 w-8 text-rose-600" />
             </div>
             <h3 className="text-xl font-medium text-gray-900 mb-2">
-              {searchTerm ? "No matching favorites found" : "No favorites yet"}
+              {searchTerm
+                ? t("favorites.noMatchingFavorites")
+                : t("favorites.noFavorites")}
             </h3>
             <p className="text-gray-500 max-w-md mx-auto mb-6">
               {searchTerm
-                ? "We couldn't find any favorites matching your search. Try a different search term."
-                : "You haven't added any volunteers to your favorites yet. Browse volunteers and click the heart icon to add them to your favorites."}
+                ? t("favorites.noMatchingFavoritesMessage")
+                : t("favorites.noFavoritesMessage")}
             </p>
             {searchTerm && (
               <Button
@@ -455,7 +447,7 @@ export default function FavoritesPage() {
                 className="border-rose-200 text-rose-700 hover:bg-rose-50"
                 onClick={() => setSearchTerm("")}
               >
-                Clear Search
+                {t("favorites.clearSearch")}
               </Button>
             )}
           </div>
@@ -506,7 +498,7 @@ export default function FavoritesPage() {
                         {Number.parseFloat(volunteer.rating).toFixed(1)}
                       </span>
                       <span className="text-xs text-gray-500">
-                        ({volunteer.review_count} reviews)
+                        ({volunteer.review_count} {t("favorites.reviews")})
                       </span>
                     </div>
                     <p className="text-sm text-gray-500">{volunteer.city}</p>
@@ -516,7 +508,7 @@ export default function FavoritesPage() {
                   <p className="text-sm text-gray-700">{volunteer.bio}</p>
                   <div className="mt-4">
                     <h4 className="text-sm font-medium text-gray-800">
-                      Services:
+                      {t("favorites.services")}
                     </h4>
                     <ul className="list-disc list-inside text-sm text-gray-600">
                       {volunteer.services &&
@@ -527,7 +519,7 @@ export default function FavoritesPage() {
                   </div>
                   <div className="mt-4">
                     <h4 className="text-sm font-medium text-gray-800">
-                      Availability:
+                      {t("favorites.availability")}
                     </h4>
                     <p className="text-sm text-gray-600">
                       {formatAvailability(volunteer)}
@@ -541,14 +533,14 @@ export default function FavoritesPage() {
                     onClick={() => openReviewsModal(volunteer)}
                   >
                     <Star className="w-4 h-4 mr-2" />
-                    Reviews
+                    {t("favorites.reviews")}
                   </Button>
                   <Button
                     size="sm"
                     className="bg-rose-600 hover:bg-rose-700"
                     onClick={() => openRequestModal(volunteer)}
                   >
-                    Request Help
+                    {t("favorites.requestHelp")}
                   </Button>
                 </CardFooter>
               </Card>
@@ -556,28 +548,30 @@ export default function FavoritesPage() {
           </div>
         )}
       </div>
-      {/* Request Help Modal */}
+     
       <Dialog open={showRequestModal} onOpenChange={setShowRequestModal}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Request Help</DialogTitle>
+            <DialogTitle>{t("favorites.requestHelp")}</DialogTitle>
             <DialogDescription>
-              Fill out the form below to request help from{" "}
-              {requestVolunteer?.first_name} {requestVolunteer?.last_name}.
+              {t("favorites.requestHelpDescription", {
+                name: `${requestVolunteer?.first_name} ${requestVolunteer?.last_name}`,
+              })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {/* Service Selection */}
+ 
             <div className="space-y-2">
               <Label htmlFor="service">
-                Service Type <span className="text-rose-500">*</span>
+                {t("favorites.serviceType")}{" "}
+                <span className="text-rose-500">*</span>
               </Label>
               {isLoadingServices ? (
                 <div className="flex items-center space-x-2">
                   <Loader2 className="h-4 w-4 animate-spin text-rose-500" />
                   <span className="text-sm text-gray-500">
-                    Loading services...
+                    {t("favorites.loadingServices")}
                   </span>
                 </div>
               ) : (
@@ -597,7 +591,7 @@ export default function FavoritesPage() {
                         : ""
                     }
                   >
-                    <SelectValue placeholder="Select a service" />
+                    <SelectValue placeholder={t("favorites.selectService")} />
                   </SelectTrigger>
                   <SelectContent>
                     {services.map((service) => (
@@ -619,10 +613,11 @@ export default function FavoritesPage() {
               )}
             </div>
 
-            {/* Day of Week */}
+
             <div className="space-y-2">
               <Label htmlFor="day_of_week">
-                Day of Week <span className="text-rose-500">*</span>
+                {t("favorites.dayOfWeek")}{" "}
+                <span className="text-rose-500">*</span>
               </Label>
               <Select
                 value={requestFormData.day_of_week}
@@ -640,16 +635,18 @@ export default function FavoritesPage() {
                       : ""
                   }
                 >
-                  <SelectValue placeholder="Select a day" />
+                  <SelectValue placeholder={t("favorites.selectDay")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="monday">Monday</SelectItem>
-                  <SelectItem value="tuesday">Tuesday</SelectItem>
-                  <SelectItem value="wednesday">Wednesday</SelectItem>
-                  <SelectItem value="thursday">Thursday</SelectItem>
-                  <SelectItem value="friday">Friday</SelectItem>
-                  <SelectItem value="saturday">Saturday</SelectItem>
-                  <SelectItem value="sunday">Sunday</SelectItem>
+                  <SelectItem value="monday">{t("days.monday")}</SelectItem>
+                  <SelectItem value="tuesday">{t("days.tuesday")}</SelectItem>
+                  <SelectItem value="wednesday">
+                    {t("days.wednesday")}
+                  </SelectItem>
+                  <SelectItem value="thursday">{t("days.thursday")}</SelectItem>
+                  <SelectItem value="friday">{t("days.friday")}</SelectItem>
+                  <SelectItem value="saturday">{t("days.saturday")}</SelectItem>
+                  <SelectItem value="sunday">{t("days.sunday")}</SelectItem>
                 </SelectContent>
               </Select>
               {formErrors.day_of_week && (
@@ -660,10 +657,11 @@ export default function FavoritesPage() {
               )}
             </div>
 
-            {/* Time of Day */}
+      
             <div className="space-y-2">
               <Label htmlFor="time_of_day">
-                Time of Day <span className="text-rose-500">*</span>
+                {t("favorites.timeOfDay")}{" "}
+                <span className="text-rose-500">*</span>
               </Label>
               <Select
                 value={requestFormData.time_of_day}
@@ -681,12 +679,18 @@ export default function FavoritesPage() {
                       : ""
                   }
                 >
-                  <SelectValue placeholder="Select a time" />
+                  <SelectValue placeholder={t("favorites.selectTime")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="morning">Morning</SelectItem>
-                  <SelectItem value="afternoon">Afternoon</SelectItem>
-                  <SelectItem value="evening">Evening</SelectItem>
+                  <SelectItem value="morning">
+                    {t("timeOfDay.morning")}
+                  </SelectItem>
+                  <SelectItem value="afternoon">
+                    {t("timeOfDay.afternoon")}
+                  </SelectItem>
+                  <SelectItem value="evening">
+                    {t("timeOfDay.evening")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
               {formErrors.time_of_day && (
@@ -697,14 +701,15 @@ export default function FavoritesPage() {
               )}
             </div>
 
-            {/* Details */}
+    
             <div className="space-y-2">
               <Label htmlFor="details">
-                Details <span className="text-rose-500">*</span>
+                {t("favorites.details")}{" "}
+                <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 id="details"
-                placeholder="Please provide details about your request..."
+                placeholder={t("favorites.detailsPlaceholder")}
                 value={requestFormData.details}
                 onChange={(e: { target: { value: any } }) =>
                   setRequestFormData({
@@ -727,7 +732,7 @@ export default function FavoritesPage() {
               )}
             </div>
 
-            {/* Urgent */}
+    
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="urgent"
@@ -743,7 +748,7 @@ export default function FavoritesPage() {
                 htmlFor="urgent"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                This is an urgent request
+                {t("favorites.urgent")}
               </Label>
             </div>
           </div>
@@ -753,7 +758,7 @@ export default function FavoritesPage() {
               variant="outline"
               onClick={() => setShowRequestModal(false)}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={submitHelpRequest}
@@ -763,82 +768,45 @@ export default function FavoritesPage() {
               {isSubmittingRequest ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting...
+                  {t("favorites.submitting")}
                 </>
               ) : (
-                "Submit Request"
+                t("favorites.submitRequest")
               )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Add the Reviews Modal at the end of the component, right before the closing </div> of the container */}
+
       <Dialog open={showReviewsModal} onOpenChange={setShowReviewsModal}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Star className="h-5 w-5 text-yellow-500" />
-              Reviews for {selectedVolunteer?.first_name}{" "}
-              {selectedVolunteer?.last_name}
+              {t("favorites.reviewsFor", {
+                name: `${selectedVolunteer?.first_name} ${selectedVolunteer?.last_name}`,
+              })}
             </DialogTitle>
             <DialogDescription>
-              {selectedVolunteer?.review_count} reviews with an average rating
-              of{" "}
-              {selectedVolunteer?.rating
-                ? Number.parseFloat(selectedVolunteer.rating).toFixed(1)
-                : "0"}{" "}
-              out of 5
+              {selectedVolunteer?.review_count}{" "}
+              {t("favorites.reviewsWithRating", {
+                rating: selectedVolunteer?.rating
+                  ? Number.parseFloat(selectedVolunteer.rating).toFixed(1)
+                  : "0",
+              })}
             </DialogDescription>
           </DialogHeader>
 
           {isLoadingReviews ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-rose-500 mr-2" />
-              <p>Loading reviews...</p>
+              <p>{t("favorites.loadingReviews")}</p>
             </div>
           ) : reviews.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">
-                No reviews yet for this volunteer.
-              </p>
+              <p className="text-gray-500">{t("favorites.noReviews")}</p>
             </div>
-          ) : (
-            <div className="space-y-4 my-4">
-              {reviews.map((review, index) => (
-                <div
-                  key={index}
-                  className="border border-gray-100 rounded-lg p-4 bg-gray-50"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <div className="flex mb-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`h-4 w-4 ${
-                              star <= review.rating
-                                ? "text-yellow-500"
-                                : "text-gray-300"
-                            }`}
-                            fill={
-                              star <= review.rating ? "currentColor" : "none"
-                            }
-                          />
-                        ))}
-                      </div>
-                      <p className="font-medium text-sm">
-                        {review.elder_first_name} {review.elder_last_name}
-                      </p>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {formatDate(review.created_at)}
-                    </p>
-                  </div>
-                  <p className="text-gray-700 text-sm">{review.comment}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          ) : null}
         </DialogContent>
       </Dialog>
     </div>

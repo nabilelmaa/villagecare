@@ -41,8 +41,9 @@ export const getFavorites = async (req, res) => {
           COALESCE(
             json_agg(DISTINCT jsonb_build_object(
               'id', s.id,
-              'name', s.name,
-              'description', s.description
+              'name_en', s.name_en,
+              'name_ar', s.name_ar,
+              'name_fr', s.name_fr
             )) FILTER (WHERE s.id IS NOT NULL), 
             '[]'
           ) AS services,
@@ -60,14 +61,10 @@ export const getFavorites = async (req, res) => {
         LEFT JOIN availability a ON u.id = a.user_id
         WHERE f.elder_id = $1
         GROUP BY u.id
-        ORDER BY u.rating DESC NULLS LAST;
+        ORDER BY u.rating DESC NULLS LAST
       `,
       [id]
     );
-
-    if (result.rows.length === 0) {
-      return res.status(200).json({ favorites: [] });
-    }
 
     res.status(200).json({ favorites: result.rows });
   } catch (error) {

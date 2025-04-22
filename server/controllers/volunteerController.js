@@ -4,39 +4,40 @@ import db from "../database/db.js";
 export const getAllVolunteers = async (req, res) => {
   try {
     const result = await db.query(`
-        SELECT 
-          u.id,
-          u.first_name,
-          u.last_name,
-          u.profile_image_url,
-          u.bio,
-          u.gender,
-          u.city,
-          u.rating,
-          u.review_count,
-          COALESCE(
-            json_agg(DISTINCT jsonb_build_object(
-              'id', s.id,
-              'name', s.name,
-              'description', s.description
-            )) FILTER (WHERE s.id IS NOT NULL), 
-            '[]'
-          ) AS services,
-          COALESCE(
-            json_agg(DISTINCT jsonb_build_object(
-              'day_of_week', a.day_of_week,
-              'time_of_day', a.time_of_day
-            )) FILTER (WHERE a.id IS NOT NULL), 
-            '[]'
-          ) AS availabilities
-        FROM users u
-        LEFT JOIN user_services us ON u.id = us.user_id AND us.selected = true
-        LEFT JOIN services s ON us.service_id = s.id
-        LEFT JOIN availability a ON u.id = a.user_id
-        WHERE u.role = 'volunteer' AND us.selected = true
-        GROUP BY u.id
-        ORDER BY u.rating DESC NULLS LAST;
-      `);
+      SELECT 
+        u.id,
+        u.first_name,
+        u.last_name,
+        u.profile_image_url,
+        u.bio,
+        u.gender,
+        u.city,
+        u.rating,
+        u.review_count,
+        COALESCE(
+          json_agg(DISTINCT jsonb_build_object(
+            'id', s.id,
+            'name_en', s.name_en,
+            'name_ar', s.name_ar,
+            'name_fr', s.name_fr
+          )) FILTER (WHERE s.id IS NOT NULL), 
+          '[]'
+        ) AS services,
+        COALESCE(
+          json_agg(DISTINCT jsonb_build_object(
+            'day_of_week', a.day_of_week,
+            'time_of_day', a.time_of_day
+          )) FILTER (WHERE a.id IS NOT NULL), 
+          '[]'
+        ) AS availabilities
+      FROM users u
+      LEFT JOIN user_services us ON u.id = us.user_id AND us.selected = true
+      LEFT JOIN services s ON us.service_id = s.id
+      LEFT JOIN availability a ON u.id = a.user_id
+      WHERE u.role = 'volunteer' AND us.selected = true
+      GROUP BY u.id
+      ORDER BY u.rating DESC NULLS LAST;
+    `);
 
     res.status(200).json({ volunteers: result.rows });
   } catch (error) {
@@ -77,7 +78,7 @@ export const getVolunteerMatches = async (req, res) => {
     const elderGender = elder.elder_gender;
     const elderCity = elder.city;
 
-    // Step 2: Match volunteers with enforced city match
+    // Step 2: Match volunteers with enforced city and gender match
     const matchQuery = await db.query(
       `
         SELECT 
@@ -93,8 +94,9 @@ export const getVolunteerMatches = async (req, res) => {
           COALESCE(
             json_agg(DISTINCT jsonb_build_object(
               'id', s.id,
-              'name', s.name,
-              'description', s.description
+              'name_en', s.name_en,
+              'name_ar', s.name_ar,
+              'name_fr', s.name_fr
             )) FILTER (WHERE s.id IS NOT NULL), 
             '[]'
           ) AS services,
@@ -119,6 +121,12 @@ export const getVolunteerMatches = async (req, res) => {
       `,
       [elderServices, elderAvailability, elderGender, elderCity]
     );
+
+    if (matchQuery.rows.length === 0) {
+      return res
+        .status(200)
+        .json({ message: "No volunteers matched your preferences" });
+    }
 
     res.status(200).json({ volunteers: matchQuery.rows });
   } catch (error) {

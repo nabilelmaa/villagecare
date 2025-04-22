@@ -46,7 +46,21 @@ import RoleSwitcher from "../components/RoleSwitcher";
 import { useToast } from "../contexts/ToastContext";
 import type { Service, Availability } from "../types/index";
 
+import { useTranslation } from "react-i18next";
+
+const getLocalizedServiceName = (
+  service: Service,
+  language: string
+): string => {
+  if (language === "ar") return service.name_ar || service.name;
+  if (language === "fr") return service.name_fr || service.name;
+  return service.name_en || service.name;
+};
+
 export default function ProfilePage() {
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.language;
+
   const [services, setServices] = useState<Service[]>([]);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
 
@@ -151,7 +165,6 @@ export default function ProfilePage() {
         return;
       }
 
-      // Fetch services preferences
       const servicesResponse = await fetch(
         "http://localhost:5000/api/user/services",
         {
@@ -294,7 +307,7 @@ export default function ProfilePage() {
       if (name === "newPassword" && value !== passwordData.confirmPassword) {
         setPasswordErrors((prev) => ({
           ...prev,
-          confirmPassword: "Passwords do not match",
+          confirmPassword: t("profile.passDontMatch"),
         }));
       } else if (
         name === "confirmPassword" &&
@@ -302,7 +315,7 @@ export default function ProfilePage() {
       ) {
         setPasswordErrors((prev) => ({
           ...prev,
-          confirmPassword: "Passwords do not match",
+          confirmPassword: t("profile.passDontMatch"),
         }));
       } else {
         setPasswordErrors((prev) => ({
@@ -327,23 +340,23 @@ export default function ProfilePage() {
     const newErrors = { ...passwordErrors };
 
     if (!passwordData.oldPassword) {
-      newErrors.oldPassword = "Current password is required";
+      newErrors.oldPassword = t("profile.currentPassRequired");
       hasErrors = true;
     }
 
     if (!passwordData.newPassword) {
-      newErrors.newPassword = "New password is required";
+      newErrors.newPassword = t("profile.newPassRequired");
       hasErrors = true;
     } else if (passwordData.newPassword.length < 8) {
-      newErrors.newPassword = "Password must be at least 8 characters";
+      newErrors.newPassword = t("profile.passMustBe");
       hasErrors = true;
     }
 
     if (!passwordData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
+      newErrors.confirmPassword = t("profile.pleaseConfirmPass");
       hasErrors = true;
     } else if (passwordData.newPassword !== passwordData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = t("profile.passDontMatch");
       hasErrors = true;
     }
 
@@ -379,9 +392,8 @@ export default function ProfilePage() {
         throw new Error(errorData.message || "Failed to update password");
       }
 
-      showToast("Password updated successfully", "success");
+      showToast(t("profile.passwordUpdated"), "success");
 
-      // Reset form
       setPasswordData({
         oldPassword: "",
         newPassword: "",
@@ -451,13 +463,10 @@ export default function ProfilePage() {
         );
       }
 
-      showToast("Preferences updated successfully", "success");
+      showToast(t("profile.preferencesUpdated"), "success");
     } catch (error) {
       console.error("Error updating elder preferences:", error);
-      showToast(
-        error instanceof Error ? error.message : "Failed to update preferences",
-        "error"
-      );
+      showToast(t("profile.preferencesNotUpdated"), "error");
     } finally {
       setIsUpdatingServices(false);
       setIsUpdatingAvailability(false);
@@ -490,7 +499,7 @@ export default function ProfilePage() {
         throw new Error(errorData.message || "Failed to update profile");
       }
 
-      showToast("Profile updated successfully", "success");
+      showToast(t("profile.profileUpdated"), "success");
     } catch (error) {
       console.error("Error updating profile:", error);
       showToast(
@@ -537,7 +546,7 @@ export default function ProfilePage() {
         throw new Error(errorData.message || "Failed to update services");
       }
 
-      showToast("Services updated successfully", "success");
+      showToast(t("profile.servicesUpdated"), "success");
       fetchServices();
     } catch (error) {
       console.error("Error updating services:", error);
@@ -580,7 +589,7 @@ export default function ProfilePage() {
         throw new Error(errorData.message || "Failed to update availability");
       }
 
-      showToast("Availability updated successfully", "success");
+      showToast(t("profile.availabilityUpdated"), "success");
 
       fetchAvailability();
     } catch (error) {
@@ -597,19 +606,19 @@ export default function ProfilePage() {
   };
 
   const weekdays = [
-    { id: "monday", label: "Monday" },
-    { id: "tuesday", label: "Tuesday" },
-    { id: "wednesday", label: "Wednesday" },
-    { id: "thursday", label: "Thursday" },
-    { id: "friday", label: "Friday" },
-    { id: "saturday", label: "Saturday" },
-    { id: "sunday", label: "Sunday" },
+    { id: "monday", label: t("days.monday") },
+    { id: "tuesday", label: t("days.tuesday") },
+    { id: "wednesday", label: t("days.wednesday") },
+    { id: "thursday", label: t("days.thursday") },
+    { id: "friday", label: t("days.friday") },
+    { id: "saturday", label: t("days.saturday") },
+    { id: "sunday", label: t("days.sunday") },
   ];
 
   const timeSlots = [
-    { id: "morning", label: "Morning (8am-12pm)" },
-    { id: "afternoon", label: "Afternoon (12pm-5pm)" },
-    { id: "evening", label: "Evening (5pm-9pm)" },
+    { id: "morning", label: t("timeOfDay.morning") },
+    { id: "afternoon", label: t("timeOfDay.afternoon") },
+    { id: "evening", label: t("timeOfDay.evening") },
   ];
 
   const isAvailable = (day: string, time: string): boolean => {
@@ -642,6 +651,8 @@ export default function ProfilePage() {
                     src={
                       userData?.profile_image_url ||
                       "/placeholder.svg?height=100&width=100" ||
+                      "/placeholder.svg" ||
+                      "/placeholder.svg" ||
                       "/placeholder.svg" ||
                       "/placeholder.svg"
                     }
@@ -686,8 +697,8 @@ export default function ProfilePage() {
                 <div className="flex items-start">
                   <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mr-2 sm:mr-3 mt-0.5" />
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-900">
-                      Phone
+                    <p className="text-sm font-medium text-gray-900">
+                      {t("profile.phone")}
                     </p>
                     <p className="text-xs sm:text-sm text-gray-500">
                       {userData?.phone_number || "Not provided"}
@@ -697,8 +708,8 @@ export default function ProfilePage() {
                 <div className="flex items-start">
                   <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mr-2 sm:mr-3 mt-0.5" />
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-900">
-                      Email
+                    <p className="text-sm font-medium text-gray-900">
+                      {t("profile.email")}
                     </p>
                     <p className="text-xs sm:text-sm text-gray-500">
                       {userData?.email || "Not provided"}
@@ -708,8 +719,8 @@ export default function ProfilePage() {
                 <div className="flex items-start">
                   <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mr-2 sm:mr-3 mt-0.5" />
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-900">
-                      Address
+                    <p className="text-sm font-medium text-gray-900">
+                      {t("profile.address")}
                     </p>
                     <p className="text-xs sm:text-sm text-gray-500">
                       {userData?.city
@@ -722,8 +733,8 @@ export default function ProfilePage() {
                 <div className="flex items-start">
                   <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mr-2 sm:mr-3 mt-0.5" />
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-900">
-                      Member Since
+                    <p className="text-sm font-medium text-gray-900">
+                      {t("profile.memberSince")}
                     </p>
                     <p className="text-xs sm:text-sm text-gray-500">
                       {userData?.created_at
@@ -738,7 +749,7 @@ export default function ProfilePage() {
                 <div className="mt-5 sm:mt-6">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-xs sm:text-sm font-medium text-gray-900">
-                      Services Offered
+                      {t("profile.servicesOffered")}
                     </h3>
                   </div>
                   <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -756,12 +767,12 @@ export default function ProfilePage() {
                             variant="outline"
                             className="bg-gray-50"
                           >
-                            {service.name}
+                            {getLocalizedServiceName(service, currentLanguage)}
                           </Badge>
                         ))
                     ) : (
                       <p className="text-sm text-gray-500">
-                        No services selected
+                        {t("profile.noServicesSelected")}
                       </p>
                     )}
                   </div>
@@ -782,7 +793,7 @@ export default function ProfilePage() {
                   {currentRole === "volunteer" && (
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        Rating
+                        {t("profile.rating")}
                       </p>
                       <p className="text-2xl font-bold text-rose-600">
                         {userData?.rating
@@ -798,7 +809,6 @@ export default function ProfilePage() {
           </Card>
         </div>
 
-        {/* Profile Tabs */}
         <div className="lg:w-2/3">
           <Tabs
             value={activeTab}
@@ -814,7 +824,7 @@ export default function ProfilePage() {
                     : "bg-rose-50 text-rose-700"
                 }`}
               >
-                Personal Info
+                {t("profile.personalInfo")}
               </TabsTrigger>
 
               {currentRole === "volunteer" && (
@@ -822,7 +832,7 @@ export default function ProfilePage() {
                   value="availability"
                   className="text-xs sm:text-sm py-1.5 sm:py-2 data-[state=active]:bg-rose-50 data-[state=active]:text-rose-700"
                 >
-                  Availability
+                  {t("profile.availability")}
                 </TabsTrigger>
               )}
 
@@ -831,7 +841,7 @@ export default function ProfilePage() {
                   value="preferences"
                   className="text-xs sm:text-sm py-1.5 sm:py-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
                 >
-                  Preferences
+                  {t("profile.preferences")}
                 </TabsTrigger>
               )}
 
@@ -843,7 +853,7 @@ export default function ProfilePage() {
                     : "bg-rose-50 text-rose-700"
                 }`}
               >
-                Security
+                {t("profile.security")}
               </TabsTrigger>
             </TabsList>
 
@@ -851,10 +861,10 @@ export default function ProfilePage() {
               <Card className="border-0 shadow-md rounded-xl">
                 <CardHeader className="p-4 sm:p-6">
                   <CardTitle className="text-lg sm:text-xl">
-                    Personal Information
+                    {t("profile.personalInfo")}
                   </CardTitle>
                   <CardDescription className="text-sm">
-                    Update your personal details here.
+                    {t("profile.updatePersonalDetails")}
                   </CardDescription>
                 </CardHeader>
 
@@ -863,7 +873,7 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                       <div className="space-y-1.5 sm:space-y-2">
                         <Label htmlFor="first_name" className="text-sm">
-                          First Name
+                          {t("profile.firstName")}
                         </Label>
                         <Input
                           id="first_name"
@@ -875,7 +885,7 @@ export default function ProfilePage() {
                       </div>
                       <div className="space-y-1.5 sm:space-y-2">
                         <Label htmlFor="last_name" className="text-sm">
-                          Last Name
+                          {t("profile.lastName")}
                         </Label>
                         <Input
                           id="last_name"
@@ -887,7 +897,7 @@ export default function ProfilePage() {
                       </div>
                       <div className="space-y-1.5 sm:space-y-2">
                         <Label htmlFor="email" className="text-sm">
-                          Email
+                          {t("profile.email")}
                         </Label>
                         <Input
                           id="email"
@@ -900,7 +910,7 @@ export default function ProfilePage() {
                       </div>
                       <div className="space-y-1.5 sm:space-y-2">
                         <Label htmlFor="phone_number" className="text-sm">
-                          Phone
+                          {t("profile.phone")}
                         </Label>
                         <Input
                           id="phone_number"
@@ -912,7 +922,7 @@ export default function ProfilePage() {
                       </div>
                       <div className="space-y-1.5 sm:space-y-2 md:col-span-2">
                         <Label htmlFor="city" className="text-sm">
-                          City
+                          {t("profile.city")}
                         </Label>
                         <Input
                           id="city"
@@ -927,7 +937,7 @@ export default function ProfilePage() {
                       </div>
                       <div className="space-y-1.5 sm:space-y-2">
                         <Label htmlFor="gender" className="text-sm">
-                          Gender
+                          {t("profile.gender")}
                         </Label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -944,7 +954,9 @@ export default function ProfilePage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="w-full">
-                            <DropdownMenuLabel>Gender</DropdownMenuLabel>
+                            <DropdownMenuLabel>
+                              {t("profile.gender")}
+                            </DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => {
@@ -954,7 +966,7 @@ export default function ProfilePage() {
                                 }));
                               }}
                             >
-                              Male
+                              {t("profile.male")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {
@@ -964,7 +976,7 @@ export default function ProfilePage() {
                                 }));
                               }}
                             >
-                              Female
+                              {t("profile.female")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -972,7 +984,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="space-y-1.5 sm:space-y-2 mt-5 sm:mt-6">
                       <Label htmlFor="bio" className="text-sm">
-                        Bio
+                        {t("profile.bio")}
                       </Label>
                       <Textarea
                         id="bio"
@@ -996,10 +1008,10 @@ export default function ProfilePage() {
                         {isUpdatingProfile ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Updating...
+                            {t("common.updating")}
                           </>
                         ) : (
-                          "Update Profile"
+                          t("profile.updateProfile")
                         )}
                       </Button>
                     </div>
@@ -1010,11 +1022,10 @@ export default function ProfilePage() {
                       <div className="border-t border-gray-100 my-6 pt-6">
                         <div className="space-y-1.5 sm:space-y-2">
                           <Label className="text-lg font-medium">
-                            Services You Offer
+                            {t("profile.servicesYouOffer")}
                           </Label>
                           <p className="text-sm text-gray-500 mb-4">
-                            Select the services you're willing to provide as a
-                            volunteer
+                            {t("profile.selectServicesVolunteer")}
                           </p>
 
                           {isLoadingServices ? (
@@ -1040,7 +1051,10 @@ export default function ProfilePage() {
                                     htmlFor={`service-${service.id}`}
                                     className="text-sm"
                                   >
-                                    {service.name}
+                                    {getLocalizedServiceName(
+                                      service,
+                                      currentLanguage
+                                    )}
                                   </Label>
                                 </div>
                               ))}
@@ -1057,10 +1071,10 @@ export default function ProfilePage() {
                             {isUpdatingServices ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving Services...
+                                {t("profile.savingServices")}
                               </>
                             ) : (
-                              "Save Services"
+                              t("profile.saveServices")
                             )}
                           </Button>
                         </div>
@@ -1070,17 +1084,15 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
             </TabsContent>
-
-            {/* Volunteer Availability Tab */}
             {currentRole === "volunteer" && (
               <TabsContent value="availability">
                 <Card className="border-0 shadow-md rounded-xl">
                   <CardHeader className="p-4 sm:p-6">
                     <CardTitle className="text-lg sm:text-xl">
-                      Availability
+                      {t("profile.availability")}
                     </CardTitle>
                     <CardDescription className="text-sm">
-                      Set your weekly availability for volunteer work.
+                      {t("profile.setAvailability")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-4 sm:p-6">
@@ -1140,10 +1152,10 @@ export default function ProfilePage() {
                       {isUpdatingAvailability ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Updating...
+                          {t("common.updating")}
                         </>
                       ) : (
-                        "Save Schedule"
+                        t("profile.saveSchedule")
                       )}
                     </Button>
                   </CardFooter>
@@ -1156,22 +1168,20 @@ export default function ProfilePage() {
                 <Card className="border-0 shadow-md rounded-xl">
                   <CardHeader className="p-4 sm:p-6">
                     <CardTitle className="text-lg sm:text-xl">
-                      Service Preferences
+                      {t("profile.servicePreferences")}
                     </CardTitle>
                     <CardDescription className="text-sm">
-                      Select the services you need and your preferred
-                      availability.
+                      {t("profile.selectServicesAndAvailability")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-4 sm:p-6">
                     <div className="space-y-6">
                       <div className="space-y-4">
                         <h3 className="text-lg font-medium">
-                          Services You Need
+                          {t("profile.servicesYouNeed")}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          Select the services you would like volunteers to help
-                          you with
+                          {t("profile.selectServicesElder")}
                         </p>
 
                         {isLoadingServices ? (
@@ -1197,7 +1207,10 @@ export default function ProfilePage() {
                                   htmlFor={`service-${service.id}`}
                                   className="text-sm"
                                 >
-                                  {service.name}
+                                  {getLocalizedServiceName(
+                                    service,
+                                    currentLanguage
+                                  )}
                                 </Label>
                               </div>
                             ))}
@@ -1207,10 +1220,10 @@ export default function ProfilePage() {
 
                       <div className="border-t border-gray-100 pt-6 space-y-4">
                         <h3 className="text-lg font-medium">
-                          Your Availability
+                          {t("profile.yourAvailability")}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          Select the times when you would prefer to receive help
+                          {t("profile.selectTimesForHelp")}
                         </p>
 
                         {isLoadingAvailability ? (
@@ -1276,10 +1289,10 @@ export default function ProfilePage() {
                       {isUpdatingServices || isUpdatingAvailability ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Updating...
+                          {t("common.updating")}
                         </>
                       ) : (
-                        "Save Preferences"
+                        t("profile.savePreferences")
                       )}
                     </Button>
                   </CardFooter>
@@ -1291,10 +1304,10 @@ export default function ProfilePage() {
               <Card className="border-0 shadow-md rounded-xl">
                 <CardHeader className="p-4 sm:p-6">
                   <CardTitle className="text-lg sm:text-xl">
-                    Security Settings
+                    {t("profile.securitySettings")}
                   </CardTitle>
                   <CardDescription className="text-sm">
-                    Update your password and security preferences.
+                    {t("profile.updatePasswordAndSecurity")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6">
@@ -1302,7 +1315,7 @@ export default function ProfilePage() {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="oldPassword" className="text-sm">
-                          Current Password
+                          {t("profile.currentPassword")}
                         </Label>
                         <div className="relative">
                           <Input
@@ -1342,7 +1355,7 @@ export default function ProfilePage() {
 
                       <div className="space-y-2">
                         <Label htmlFor="newPassword" className="text-sm">
-                          New Password
+                          {t("profile.newPassword")}
                         </Label>
                         <div className="relative">
                           <Input
@@ -1382,7 +1395,7 @@ export default function ProfilePage() {
 
                       <div className="space-y-2">
                         <Label htmlFor="confirmPassword" className="text-sm">
-                          Confirm New Password
+                          {t("profile.confirmNewPassword")}
                         </Label>
                         <div className="relative">
                           <Input
@@ -1436,10 +1449,10 @@ export default function ProfilePage() {
                         {isUpdatingPassword ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Updating...
+                            {t("common.updating")}
                           </>
                         ) : (
-                          "Update Password"
+                          t("profile.updatePassword")
                         )}
                       </Button>
                     </div>

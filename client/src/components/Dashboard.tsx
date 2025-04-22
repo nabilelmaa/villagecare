@@ -47,9 +47,20 @@ import { Checkbox } from "../components/ui/checkbox";
 
 import { useUserData } from "../contexts/UserContext";
 import { useToast } from "../contexts/ToastContext";
+import { useTranslation } from "react-i18next";
 
-import type { Service, Review } from "../types/index";
+import type { Review } from "../types/index";
 import { motion, AnimatePresence } from "framer-motion";
+
+interface Service {
+  id: number;
+  name: string;
+  name_en?: string;
+  name_fr?: string;
+  name_ar?: string;
+  description: string | null;
+  selected?: boolean;
+}
 
 interface Volunteer {
   id: number;
@@ -64,6 +75,9 @@ interface Volunteer {
   services: {
     id: number;
     name: string;
+    name_en?: string;
+    name_fr?: string;
+    name_ar?: string;
     description: string | null;
   }[];
   availabilities: {
@@ -103,6 +117,7 @@ interface FiltersState {
 }
 
 export default function DashboardPage() {
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState("volunteers");
   const [matchedVolunteers, setMatchedVolunteers] = useState<Volunteer[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -136,11 +151,11 @@ export default function DashboardPage() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingStage, setLoadingStage] = useState(0);
   const loadingStages = [
-    "Analyzing your preferences...",
-    "Searching for compatible volunteers...",
-    "Checking availability...",
-    "Finding perfect matches...",
-    "Almost there...",
+    t("dashboard.findingMatch.analyzing"),
+    t("dashboard.findingMatch.searching"),
+    t("dashboard.findingMatch.checking"),
+    t("dashboard.findingMatch.finding"),
+    t("dashboard.findingMatch.almost"),
   ];
 
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(
@@ -182,6 +197,21 @@ export default function DashboardPage() {
   const [animateCards, setAnimateCards] = useState(false);
   const [isShowingMatchResults, setIsShowingMatchResults] = useState(false);
 
+  const getLocalizedServiceName = (service: {
+    name: string;
+    name_en?: string;
+    name_fr?: string;
+    name_ar?: string;
+  }) => {
+    const currentLang = i18n.language;
+    const langKey = `name_${currentLang}` as keyof typeof service;
+
+    if (service[langKey]) {
+      return service[langKey];
+    }
+    return service.name;
+  };
+
   const fetchServices = async () => {
     setIsLoadingServices(true);
     try {
@@ -216,7 +246,6 @@ export default function DashboardPage() {
   const checkFavoriteStatus = async (
     volunteers: Volunteer[]
   ): Promise<Volunteer[]> => {
-    // If volunteers array is empty, return it immediately
     if (!volunteers || volunteers.length === 0) {
       return [];
     }
@@ -293,7 +322,7 @@ export default function DashboardPage() {
         );
 
         if (response.ok) {
-          showToast("Removed from favorites", "success");
+          showToast(t("favorites.removedFromFavorites"), "success");
 
           setVolunteers((prevVolunteers) =>
             prevVolunteers.map((volunteer) =>
@@ -334,7 +363,7 @@ export default function DashboardPage() {
         );
 
         if (response.ok) {
-          showToast("Added to favorites", "success");
+          showToast(t("favorites.addedToFavorites"), "success");
 
           setVolunteers((prevVolunteers) =>
             prevVolunteers.map((volunteer) =>
@@ -439,7 +468,7 @@ export default function DashboardPage() {
         throw new Error(errorData.message || "Failed to submit request");
       }
 
-      showToast("Help request submitted successfully", "success");
+      showToast(t("requests.requestSent"), "success");
       setShowRequestModal(false);
     } catch (error) {
       console.error("Error submitting help request:", error);
@@ -490,7 +519,10 @@ export default function DashboardPage() {
             const errorData = await volunteersResponse.json().catch(() => ({}));
             throw new Error(
               errorData.message ||
-                `Server responded with status: ${volunteersResponse.status}`
+                `Server=>({}));
+            throw new Error(
+              errorData.message ||
+                \`Server responded with status: ${volunteersResponse.status}`
             );
           }
 
@@ -499,7 +531,6 @@ export default function DashboardPage() {
           const volunteersArray = volunteersData.volunteers || [];
 
           if (isMounted) {
-            // Even if there are no volunteers, we should still set empty arrays rather than failing
             const volunteersWithFavoriteStatus = await checkFavoriteStatus(
               volunteersArray
             );
@@ -544,7 +575,7 @@ export default function DashboardPage() {
     return () => {
       isMounted = false;
     };
-  }, [showToast]);
+  }, [showToast, t]);
 
   const fetchReviews = async (volunteerId: number) => {
     setIsLoadingReviews(true);
@@ -610,7 +641,7 @@ export default function DashboardPage() {
         throw new Error("Failed to submit review");
       }
 
-      showToast("Review submitted successfully", "success");
+      showToast(t("dashboard.reviewSubmitted"), "success");
 
       setNewReview({
         rating: 5,
@@ -642,7 +673,7 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Error submitting review:", error);
-      showToast("Failed to submit review", "error");
+      showToast(t("dashboard.reviewNotSubmitted"), "error");
     } finally {
       setIsSubmittingReview(false);
     }
@@ -744,10 +775,7 @@ export default function DashboardPage() {
 
           setIsShowingMatchResults(true);
 
-          showToast(
-            "Found perfect matches for you! Displaying results now.",
-            "success"
-          );
+          showToast(t("dashboard.volunteerFound"), "success");
 
           setTimeout(() => {
             document
@@ -756,12 +784,9 @@ export default function DashboardPage() {
           }, 100);
         } else {
           setNoMatchFound(true);
-          showToast(
-            "No matching volunteers found. Please update your preferences in your profile.",
-            "info"
-          );
+          showToast(t("dashboard.noVolunteerFound"), "info");
         }
-      }, 300); // Small delay after modal closes before showing toast
+      }, 300);
     }, remainingTime);
   };
 
@@ -784,8 +809,6 @@ export default function DashboardPage() {
     searchTerm: string,
     filters: FiltersState
   ) => {
-    // If we're showing match results and there are no filters or search terms active,
-    // use the matched volunteers instead of all volunteers
     let result =
       isShowingMatchResults &&
       !searchTerm &&
@@ -801,7 +824,9 @@ export default function DashboardPage() {
           `${v.first_name} ${v.last_name}`.toLowerCase().includes(term) ||
           v.bio.toLowerCase().includes(term) ||
           (v.city && v.city.toLowerCase().includes(term)) ||
-          v.services.some((s) => s.name.toLowerCase().includes(term))
+          v.services.some((s) =>
+            getLocalizedServiceName(s).toLowerCase().includes(term)
+          )
       );
     }
 
@@ -813,7 +838,7 @@ export default function DashboardPage() {
       result = result.filter((v) =>
         v.services.some((s) =>
           activeServiceFilters.some((filter) =>
-            s.name
+            getLocalizedServiceName(s)
               .toLowerCase()
               .replace(/\s+/g, "")
               .includes(filter.toLowerCase())
@@ -843,7 +868,7 @@ export default function DashboardPage() {
 
   const formatAvailability = (volunteer: Volunteer): string => {
     if (!volunteer.availabilities) {
-      return "Availability not specified";
+      return t("dashboard.availabilityNotSpecified");
     }
 
     const days = new Set(volunteer.availabilities.map((a) => a.day_of_week));
@@ -852,20 +877,20 @@ export default function DashboardPage() {
     let availabilityText = "";
 
     if (days.size > 0) {
-      const daysList = Array.from(days).map(
-        (day) => day.charAt(0).toUpperCase() + day.slice(1)
+      const daysList = Array.from(days).map((day) =>
+        t(`dashboard.days.${day}`)
       );
       availabilityText += daysList.join(", ");
     }
 
     if (times.size > 0) {
-      const timesList = Array.from(times).map(
-        (time) => time.charAt(0).toUpperCase() + time.slice(1)
+      const timesList = Array.from(times).map((time) =>
+        t(`dashboard.times.${time}`)
       );
       availabilityText += " (" + timesList.join(", ") + ")";
     }
 
-    return availabilityText || "Availability not specified";
+    return availabilityText || t("dashboard.availabilityNotSpecified");
   };
 
   const formatDate = (dateString: string): string => {
@@ -883,7 +908,7 @@ export default function DashboardPage() {
         <div className="text-center">
           <Loader2 className="mx-auto h-12 w-12 animate-spin text-rose-600" />
           <p className="mt-4 text-lg font-medium text-gray-700">
-            Loading dashboard...
+            {t("dashboard.loading")}
           </p>
         </div>
       </div>
@@ -898,12 +923,12 @@ export default function DashboardPage() {
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 md:mb-8 gap-3 md:gap-4">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#EAAFC8] to-[#EC2F4B]">
-                  Welcome Back, {userData?.first_name || "User"}
+                  {t("dashboard.welcome")}, {userData?.first_name || "User"}
                 </h1>
                 <p className="text-sm sm:text-base text-gray-600 mt-1">
                   {currentRole === "elder"
-                    ? "Let's find the perfect volunteer for your needs"
-                    : "Find opportunities to help in your community"}
+                    ? t("dashboard.findPerfectVolunteer")
+                    : t("dashboard.findOpportunities")}
                 </p>
               </div>
               {currentRole === "elder" && (
@@ -988,7 +1013,7 @@ export default function DashboardPage() {
                         exit={{ opacity: 0 }}
                       >
                         <Heart className="mr-2 h-5 w-5" />
-                        Find My Volunteer
+                        {t("dashboard.findVolunteer")}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -996,7 +1021,6 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Show a fullscreen overlay when finding matches */}
             {showCreativeLoading && (
               <Dialog open={showCreativeLoading} onOpenChange={() => {}}>
                 <DialogContent className="sm:max-w-md bg-gradient-to-br from-rose-500 to-pink-600 border-none text-white">
@@ -1050,7 +1074,7 @@ export default function DashboardPage() {
                     </motion.div>
 
                     <h2 className="text-2xl font-bold mb-2 text-center">
-                      Finding Your Perfect Match
+                      {t("dashboard.findingVolunteer")}
                     </h2>
 
                     <motion.p
@@ -1075,7 +1099,7 @@ export default function DashboardPage() {
                     </div>
 
                     <p className="text-white/70 text-sm mt-4">
-                      Finding volunteers that match your preferences...
+                      {t("dashboard.findingMatch.searching")}
                     </p>
                   </div>
                 </DialogContent>
@@ -1087,12 +1111,10 @@ export default function DashboardPage() {
                 <AlertCircle className="text-amber-500 h-5 w-5 mt-0.5 mr-3 flex-shrink-0" />
                 <div>
                   <h3 className="font-medium text-amber-800">
-                    No matches found
+                    {t("dashboard.noMatchFound.title")}
                   </h3>
                   <p className="text-amber-700 text-sm mt-1">
-                    We couldn't find any volunteers matching your preferences.
-                    Please update your profile with your service needs and
-                    availability to improve matching.
+                    {t("dashboard.noMatchFound.description")}
                   </p>
                   <Button
                     variant="outline"
@@ -1100,7 +1122,7 @@ export default function DashboardPage() {
                     className="mt-2 border-amber-300 text-amber-700 hover:bg-amber-100"
                     onClick={() => (window.location.href = "/profile")}
                   >
-                    Update Preferences
+                    {t("dashboard.noMatchFound.updatePreferences")}
                   </Button>
                 </div>
               </div>
@@ -1113,8 +1135,8 @@ export default function DashboardPage() {
                   <Input
                     placeholder={
                       currentRole === "elder"
-                        ? "Search volunteers by name, skills, city, or keywords..."
-                        : "Search for help requests..."
+                        ? t("dashboard.searchPlaceholder")
+                        : t("dashboard.searchRequestsPlaceholder")
                     }
                     className="pl-9 sm:pl-10 py-5 sm:py-6 bg-gray-50 border-gray-100 rounded-xl text-sm"
                     value={searchTerm}
@@ -1135,12 +1157,12 @@ export default function DashboardPage() {
                   }}
                 >
                   <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
-                  Filters
+                  {t("dashboard.filters")}
                   {(Object.values(filters.services).some(Boolean) ||
                     Object.values(filters.weekDays).some(Boolean) ||
                     isShowingMatchResults) && (
                     <Badge className="ml-2 bg-rose-100 text-rose-800 hover:bg-rose-200 text-xs">
-                      Active
+                      {t("dashboard.active")}
                     </Badge>
                   )}
                 </Button>
@@ -1149,18 +1171,37 @@ export default function DashboardPage() {
               {isFilterOpen && (
                 <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 animate-in fade-in slide-in-from-top-4 duration-300">
                   <div>
-                    <h3 className="font-medium text-gray-900 mb-4">Services</h3>
+                    <h3 className="font-medium text-gray-900 mb-4">
+                      {t("dashboard.services")}
+                    </h3>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { id: "walks", label: "Walks" },
-                        { id: "groceryShopping", label: "Grocery Shopping" },
-                        { id: "mealPreparation", label: "Meal Preparation" },
-                        { id: "transportation", label: "Transportation" },
+                        {
+                          id: "walks",
+                          label: t("dashboard.serviceTypes.walks"),
+                        },
+                        {
+                          id: "groceryShopping",
+                          label: t("dashboard.serviceTypes.groceryShopping"),
+                        },
+                        {
+                          id: "mealPreparation",
+                          label: t("dashboard.serviceTypes.mealPreparation"),
+                        },
+                        {
+                          id: "transportation",
+                          label: t("dashboard.serviceTypes.transportation"),
+                        },
                         {
                           id: "healthcareSupport",
-                          label: "Healthcare Support",
+                          label: t("dashboard.serviceTypes.healthcareSupport"),
                         },
-                        { id: "friendlyConversation", label: "Conversation" },
+                        {
+                          id: "friendlyConversation",
+                          label: t(
+                            "dashboard.serviceTypes.friendlyConversation"
+                          ),
+                        },
                       ].map((service) => (
                         <div
                           key={service.id}
@@ -1194,17 +1235,20 @@ export default function DashboardPage() {
 
                   <div>
                     <h3 className="font-medium text-gray-900 mb-4">
-                      Week Days
+                      {t("dashboard.weekDays")}
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { id: "monday", label: "Monday" },
-                        { id: "tuesday", label: "Tuesday" },
-                        { id: "wednesday", label: "Wednesday" },
-                        { id: "thursday", label: "Thursday" },
-                        { id: "friday", label: "Friday" },
-                        { id: "saturday", label: "Saturday" },
-                        { id: "sunday", label: "Sunday" },
+                        { id: "monday", label: t("dashboard.days.monday") },
+                        { id: "tuesday", label: t("dashboard.days.tuesday") },
+                        {
+                          id: "wednesday",
+                          label: t("dashboard.days.wednesday"),
+                        },
+                        { id: "thursday", label: t("dashboard.days.thursday") },
+                        { id: "friday", label: t("dashboard.days.friday") },
+                        { id: "saturday", label: t("dashboard.days.saturday") },
+                        { id: "sunday", label: t("dashboard.days.sunday") },
                       ].map((day) => (
                         <div
                           key={day.id}
@@ -1242,7 +1286,7 @@ export default function DashboardPage() {
                   value="volunteers"
                   className="rounded-lg data-[state=active]:bg-rose-50 data-[state=active]:text-rose-900 data-[state=active]:shadow-sm"
                 >
-                  Available Volunteers
+                  {t("dashboard.availableVolunteers")}
                 </TabsTrigger>
               </TabsList>
 
@@ -1257,12 +1301,12 @@ export default function DashboardPage() {
                       <Search className="h-8 w-8 text-rose-600" />
                     </div>
                     <h3 className="text-xl font-medium text-gray-900 mb-2">
-                      No results found
+                      {t("dashboard.noResultsFound")}
                     </h3>
                     <p className="text-gray-500 max-w-md mx-auto mb-6">
                       {currentRole === "elder"
-                        ? "We couldn't find any volunteers matching your current filters. Try adjusting your search criteria."
-                        : "We couldn't find any help requests matching your current filters. Try adjusting your search criteria."}
+                        ? t("dashboard.noResultsMessage.elder")
+                        : t("dashboard.noResultsMessage.volunteer")}
                     </p>
                     <Button
                       variant="outline"
@@ -1288,14 +1332,14 @@ export default function DashboardPage() {
                             sunday: false,
                           },
                         });
-                        // Reset match results mode if active
+
                         if (isShowingMatchResults) {
                           setIsShowingMatchResults(false);
                           setFilteredVolunteers(volunteers);
                         }
                       }}
                     >
-                      Reset Filters
+                      {t("dashboard.resetFilters")}
                     </Button>
                   </div>
                 ) : (
@@ -1309,12 +1353,12 @@ export default function DashboardPage() {
                           />
                           <div>
                             <h3 className="font-medium text-rose-800">
-                              Showing your perfect matches
+                              {t("dashboard.matchResults.title")}
                             </h3>
                             <p className="text-rose-700 text-sm">
-                              We've found {filteredVolunteers.length} volunteer
-                              {filteredVolunteers.length !== 1 ? "s" : ""} that
-                              match your preferences.
+                              {t("dashboard.matchResults.description", {
+                                count: filteredVolunteers.length,
+                              })}
                             </p>
                           </div>
                         </div>
@@ -1327,7 +1371,7 @@ export default function DashboardPage() {
                             setFilteredVolunteers(volunteers);
                           }}
                         >
-                          View All Volunteers
+                          {t("dashboard.matchResults.viewAll")}
                         </Button>
                       </div>
                     )}
@@ -1388,7 +1432,8 @@ export default function DashboardPage() {
                                     {volunteer.rating || "0"}
                                   </span>
                                   <span className="text-xs text-gray-500">
-                                    ({volunteer.review_count} reviews)
+                                    ({volunteer.review_count}{" "}
+                                    {t("dashboard.reviews")})
                                   </span>
                                 </div>
                                 <p className="text-sm text-gray-500">
@@ -1404,17 +1449,19 @@ export default function DashboardPage() {
                             </p>
                             <div className="mt-3 sm:mt-4">
                               <h4 className="text-xs sm:text-sm font-medium text-gray-800">
-                                Services:
+                                {t("dashboard.volunteerCard.services")}
                               </h4>
                               <ul className="list-disc list-inside text-xs sm:text-sm text-gray-600">
                                 {volunteer.services.map((service) => (
-                                  <li key={service.id}>{service.name}</li>
+                                  <li key={service.id}>
+                                    {getLocalizedServiceName(service)}
+                                  </li>
                                 ))}
                               </ul>
                             </div>
                             <div className="mt-3 sm:mt-4">
                               <h4 className="text-xs sm:text-sm font-medium text-gray-800">
-                                Availability:
+                                {t("dashboard.volunteerCard.availability")}
                               </h4>
                               <p className="text-xs sm:text-sm text-gray-600">
                                 {formatAvailability(volunteer)}
@@ -1429,7 +1476,7 @@ export default function DashboardPage() {
                               onClick={() => openReviewsModal(volunteer)}
                             >
                               <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                              Reviews
+                              {t("dashboard.reviews")}
                             </Button>
                             {currentRole === "elder" && (
                               <Button
@@ -1437,7 +1484,7 @@ export default function DashboardPage() {
                                 className="text-xs sm:text-sm px-2 sm:px-3 py-1 h-8 sm:h-9"
                                 onClick={() => openRequestModal(volunteer)}
                               >
-                                Request Help
+                                {t("requests.newRequest")}
                               </Button>
                             )}
                           </CardFooter>
@@ -1459,10 +1506,10 @@ export default function DashboardPage() {
         <DialogContent className="w-[95vw] max-w-[500px] p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl">
-              Volunteer Reviews
+              {t("dashboard.reviewsModal.title")}
             </DialogTitle>
             <DialogDescription className="text-sm">
-              See what others are saying.
+              {t("dashboard.reviewsModal.description")}
             </DialogDescription>
           </DialogHeader>
           {selectedVolunteer && (
@@ -1484,7 +1531,7 @@ export default function DashboardPage() {
                     {selectedVolunteer.rating || "0"}
                   </span>
                   <span className="text-xs text-gray-500">
-                    ({selectedVolunteer.review_count} reviews)
+                    ({selectedVolunteer.review_count} {t("dashboard.reviews")})
                   </span>
                 </div>
                 <p className="text-sm text-gray-500">
@@ -1537,14 +1584,14 @@ export default function DashboardPage() {
                 ))
               ) : (
                 <li className="text-center py-4 text-gray-500">
-                  No reviews available
+                  {t("dashboard.reviewsModal.noReviews")}
                 </li>
               )}
             </ul>
           )}
           <div className="mt-6 pt-6 border-t border-gray-100">
             <h4 className="text-lg font-medium text-gray-900 mb-3">
-              Add a Review
+              {t("dashboard.reviewsModal.addReview")}
             </h4>
             <div className="flex items-center space-x-3 mb-3">
               {[1, 2, 3, 4, 5].map((rating) => (
@@ -1567,7 +1614,7 @@ export default function DashboardPage() {
               ))}
             </div>
             <Textarea
-              placeholder="Add an optional comment here..."
+              placeholder={t("dashboard.reviewsModal.addComment")}
               className="bg-gray-50 border-gray-100 rounded-md"
               value={newReview.comment}
               onChange={(e) =>
@@ -1583,11 +1630,11 @@ export default function DashboardPage() {
               >
                 {isSubmittingReview ? (
                   <>
-                    Submitting...
+                    {t("dashboard.reviewsModal.submitting")}
                     <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                   </>
                 ) : (
-                  "Submit Review"
+                  t("dashboard.reviewsModal.submitReview")
                 )}
               </Button>
             </DialogFooter>
@@ -1598,10 +1645,10 @@ export default function DashboardPage() {
         <DialogContent className="w-[95vw] max-w-[425px] p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl">
-              Request Help
+              {t("dashboard.requestModal.title")}
             </DialogTitle>
             <DialogDescription className="text-sm">
-              Request help from this volunteer.
+              {t("dashboard.requestModal.description")}
             </DialogDescription>
           </DialogHeader>
           {requestVolunteer && (
@@ -1630,7 +1677,9 @@ export default function DashboardPage() {
           )}
           <div className="grid gap-4 py-4">
             <div>
-              <Label htmlFor="service">Service</Label>
+              <Label htmlFor="service">
+                {t("dashboard.requestModal.service")}
+              </Label>
               <Select
                 onValueChange={(value) =>
                   setRequestFormData({
@@ -1640,12 +1689,14 @@ export default function DashboardPage() {
                 }
               >
                 <SelectTrigger className="bg-gray-50 border-gray-100 rounded-md">
-                  <SelectValue placeholder="Select a service" />
+                  <SelectValue
+                    placeholder={t("dashboard.requestModal.selectService")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {isLoadingServices ? (
                     <SelectItem value="-1" disabled>
-                      Loading...
+                      {t("dashboard.requestModal.loading")}
                     </SelectItem>
                   ) : (
                     services.map((service) => (
@@ -1653,7 +1704,7 @@ export default function DashboardPage() {
                         key={service.id}
                         value={service.id.toString()}
                       >
-                        {service.name}
+                        {getLocalizedServiceName(service)}
                       </SelectItem>
                     ))
                   )}
@@ -1666,14 +1717,16 @@ export default function DashboardPage() {
               )}
             </div>
             <div>
-              <Label htmlFor="day">Day of the week</Label>
+              <Label htmlFor="day">{t("dashboard.requestModal.day")}</Label>
               <Select
                 onValueChange={(value) =>
                   setRequestFormData({ ...requestFormData, day_of_week: value })
                 }
               >
                 <SelectTrigger className="bg-gray-50 border-gray-100 rounded-md">
-                  <SelectValue placeholder="Select a day" />
+                  <SelectValue
+                    placeholder={t("dashboard.requestModal.selectDay")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {[
@@ -1686,7 +1739,7 @@ export default function DashboardPage() {
                     "sunday",
                   ].map((day) => (
                     <SelectItem key={day} value={day}>
-                      {day.charAt(0).toUpperCase() + day.slice(1)}
+                      {t(`dashboard.days.${day}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1698,19 +1751,21 @@ export default function DashboardPage() {
               )}
             </div>
             <div>
-              <Label htmlFor="time">Time of day</Label>
+              <Label htmlFor="time">{t("dashboard.requestModal.time")}</Label>
               <Select
                 onValueChange={(value) =>
                   setRequestFormData({ ...requestFormData, time_of_day: value })
                 }
               >
                 <SelectTrigger className="bg-gray-50 border-gray-100 rounded-md">
-                  <SelectValue placeholder="Select a time" />
+                  <SelectValue
+                    placeholder={t("dashboard.requestModal.selectTime")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {["morning", "afternoon", "evening"].map((time) => (
                     <SelectItem key={time} value={time}>
-                      {time.charAt(0).toUpperCase() + time.slice(1)}
+                      {t(`dashboard.times.${time}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1722,10 +1777,12 @@ export default function DashboardPage() {
               )}
             </div>
             <div>
-              <Label htmlFor="details">Details(optional)</Label>
+              <Label htmlFor="details">
+                {t("dashboard.requestModal.details")}
+              </Label>
               <Textarea
                 id="details"
-                placeholder="Please provide details about your request."
+                placeholder={t("dashboard.requestModal.detailsPlaceholder")}
                 className="bg-gray-50 border-gray-100 rounded-md"
                 value={requestFormData.details}
                 onChange={(e) =>
@@ -1752,7 +1809,9 @@ export default function DashboardPage() {
                   })
                 }
               />
-              <Label htmlFor="urgent">Urgent</Label>
+              <Label htmlFor="urgent">
+                {t("dashboard.requestModal.urgent")}
+              </Label>
             </div>
           </div>
           <DialogFooter>
@@ -1763,11 +1822,11 @@ export default function DashboardPage() {
             >
               {isSubmittingRequest ? (
                 <>
-                  Submitting...
+                  {t("dashboard.requestModal.submitting")}
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                 </>
               ) : (
-                "Submit Request"
+                t("dashboard.requestModal.submitRequest")
               )}
             </Button>
           </DialogFooter>

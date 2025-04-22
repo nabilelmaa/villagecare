@@ -19,8 +19,9 @@ export const getServices = async (req, res) => {
       `
         SELECT 
           s.id, 
-          s.name, 
-          s.description, 
+          s.name_ar, 
+          s.name_en, 
+          s.name_fr, 
           s.created_at, 
           s.updated_at,
           COALESCE(us.selected, false) AS selected

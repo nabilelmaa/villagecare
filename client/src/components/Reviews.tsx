@@ -1,9 +1,8 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useUserData } from "../contexts/UserContext";
 import { Star, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 interface Review {
   rating: number;
@@ -18,6 +17,7 @@ export default function Reviews() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -61,12 +61,9 @@ export default function Reviews() {
           <Star className="h-10 w-10 text-rose-600" />
         </div>
         <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-          Reviews are for volunteers
+          {t("reviews.reviewsForVolunteers")}
         </h2>
-        <p className="text-gray-600 max-w-md">
-          This section is only available for volunteer accounts. Switch to a
-          volunteer account to view your reviews.
-        </p>
+        <p className="text-gray-600 max-w-md">{t("reviews.thisSections")}</p>
       </div>
     );
   }
@@ -96,10 +93,10 @@ export default function Reviews() {
   return (
     <div className="min-h-screen container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Your Reviews</h1>
-        <p className="text-gray-600">
-          See what elders are saying about your services and assistance.
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {t("reviews.title")}
+        </h1>
+        <p className="text-gray-600">{t("reviews.subtitle")}</p>
       </div>
 
       {reviews.length === 0 ? (
@@ -108,11 +105,10 @@ export default function Reviews() {
             <Star className="h-8 w-8 text-rose-600" />
           </div>
           <h3 className="text-xl font-semibold text-gray-800 mb-2">
-            No reviews yet
+            {t("reviews.noReviews")}
           </h3>
           <p className="text-gray-600 max-w-md mx-auto">
-            You haven't received any reviews yet. Keep providing great service,
-            and the reviews will come!
+            {t("reviews.youHaventReceived")}
           </p>
         </div>
       ) : (

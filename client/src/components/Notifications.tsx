@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Bell, Check, X, Clock, Calendar } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -16,6 +17,8 @@ interface Notification {
 }
 
 const Notifications = () => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === "ar";
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +29,7 @@ const Notifications = () => {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        showToast("Please log in again", "error");
+        showToast(t("common.loginAgain"), "error");
         return;
       }
       const response = await fetch("http://localhost:5000/api/notifications", {
@@ -37,13 +40,13 @@ const Notifications = () => {
         },
       });
       if (!response.ok) {
-        throw new Error("Failed to fetch notifications");
+        throw new Error(t("notifications.fetchFailed"));
       }
       const data = await response.json();
       setNotifications(data.notifications || []);
       setError(null);
     } catch (err) {
-      setError("Failed to load notifications. Please try again later.");
+      setError(t("notifications.loadError"));
       console.error("Error fetching notifications:", err);
     } finally {
       setLoading(false);
@@ -54,7 +57,7 @@ const Notifications = () => {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        showToast("Please log in again", "error");
+        showToast(t("common.loginAgain"), "error");
         return;
       }
       const response = await fetch(
@@ -69,7 +72,7 @@ const Notifications = () => {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to mark notification as read");
+        throw new Error(t("notifications.markReadFailed"));
       }
 
       setNotifications((prevNotifications) =>
@@ -80,11 +83,11 @@ const Notifications = () => {
         )
       );
 
-      showToast("Notification marked as read");
+      showToast(t("notifications.markedAsRead"));
 
       fetchNotifications();
     } catch (err) {
-      showToast("Failed to mark notification as read", "error");
+      showToast(t("notifications.markReadFailed"), "error");
       console.error("Error marking notification as read:", err);
     }
   };
@@ -110,7 +113,7 @@ const Notifications = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat(i18n.language, {
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -121,7 +124,9 @@ const Notifications = () => {
   if (loading) {
     return (
       <div className="p-4 space-y-4">
-        <h2 className="text-xl font-semibold mb-4">Notifications</h2>
+        <h2 className="text-xl font-semibold mb-4">
+          {t("notifications.title")}
+        </h2>
         {[1, 2, 3].map((i) => (
           <Card key={i} className="p-4">
             <div className="flex items-start gap-3">
@@ -141,8 +146,10 @@ const Notifications = () => {
     <div className="container mx-auto px-4 py-8 max-w-6xl min-h-screen">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-gray-500">See all your notifications here</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {t("notifications.title")}
+          </h1>
+          <p className="text-gray-500">{t("notifications.subtitle")}</p>
         </div>
         {notifications.length > 0 && (
           <Button
@@ -152,7 +159,7 @@ const Notifications = () => {
             className="flex items-center gap-1"
           >
             <Clock className="h-4 w-4" />
-            Refresh
+            {t("notifications.refresh")}
           </Button>
         )}
       </div>
@@ -169,10 +176,10 @@ const Notifications = () => {
             <Bell className="h-8 w-8 text-rose-600" />
           </div>
           <h3 className="text-xl font-medium text-gray-900 mb-2">
-            No notifications yet
+            {t("notifications.noNotifications")}
           </h3>
           <p className="text-gray-500 max-w-md mx-auto mb-6">
-            Upon recieiving a new notification, it will be displayed here.
+            {t("notifications.noNotificationsMessage")}
           </p>
         </div>
       ) : (
@@ -205,7 +212,7 @@ const Notifications = () => {
                     onClick={() => markAsRead(notification.id)}
                     className="text-xs text-blue-600 hover:text-blue-800"
                   >
-                    Mark as read
+                    {t("notifications.markAsRead")}
                   </Button>
                 ) : null}
               </div>

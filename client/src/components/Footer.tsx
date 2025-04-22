@@ -1,8 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { Heart } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function Footer() {
   const location = useLocation();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.dir() === "rtl";
 
   const isLoginPage = location.pathname === "/auth/login";
   const isRegisterPage = location.pathname === "/auth/register";
@@ -20,18 +23,20 @@ export default function Footer() {
     return null;
   }
 
-  // Simplified footer for dashboard pages
   if (isDashboardPage) {
     return (
-      <footer className="bg-white border-t border-gray-100 py-4 text-center text-sm text-gray-500 ml-0 md:ml-64">
+      <footer
+        className={`bg-white border-t border-gray-100 py-4 text-center text-sm text-gray-500 ${
+          isRTL ? "mr-0 md:mr-64" : "ml-0 md:ml-64"
+        }`}
+      >
         <div className="container mx-auto px-4">
-          <p>© {new Date().getFullYear()} VillageCare. All rights reserved.</p>
+          <p>{t("footer.copyright", { year: new Date().getFullYear() })}</p>
         </div>
       </footer>
     );
   }
 
-  // Full footer for landing and other pages
   return (
     <footer id="about" className="bg-white border-t border-gray-100 py-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -42,20 +47,19 @@ export default function Footer() {
                 VillageCare
               </span>
             </Link>
-            <p className="text-gray-600 text-sm">
-              Connecting seniors with compassionate volunteers for everyday
-              support and companionship.
-            </p>
+            <p className="text-gray-600 text-sm">{t("footer.tagline")}</p>
           </div>
           <div>
-            <h3 className="font-medium text-gray-900 mb-4">Quick Links</h3>
+            <h3 className="font-medium text-gray-900 mb-4">
+              {t("footer.quickLinks")}
+            </h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   to="/about"
                   className="text-gray-600 hover:text-rose-700 transition-colors"
                 >
-                  About Us
+                  {t("footer.aboutUs")}
                 </Link>
               </li>
               <li>
@@ -63,7 +67,7 @@ export default function Footer() {
                   to="/services"
                   className="text-gray-600 hover:text-rose-700 transition-colors"
                 >
-                  Our Services
+                  {t("footer.ourServices")}
                 </Link>
               </li>
               <li>
@@ -71,7 +75,7 @@ export default function Footer() {
                   to="/volunteers"
                   className="text-gray-600 hover:text-rose-700 transition-colors"
                 >
-                  Volunteers
+                  {t("footer.volunteers")}
                 </Link>
               </li>
               <li>
@@ -79,20 +83,22 @@ export default function Footer() {
                   to="/contact"
                   className="text-gray-600 hover:text-rose-700 transition-colors"
                 >
-                  Contact Us
+                  {t("footer.contactUs")}
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <h3 className="font-medium text-gray-900 mb-4">Resources</h3>
+            <h3 className="font-medium text-gray-900 mb-4">
+              {t("footer.resources")}
+            </h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   to="/blog"
                   className="text-gray-600 hover:text-rose-700 transition-colors"
                 >
-                  Blog
+                  {t("footer.blog")}
                 </Link>
               </li>
               <li>
@@ -100,7 +106,7 @@ export default function Footer() {
                   to="/faq"
                   className="text-gray-600 hover:text-rose-700 transition-colors"
                 >
-                  FAQ
+                  {t("footer.faq")}
                 </Link>
               </li>
               <li>
@@ -108,7 +114,7 @@ export default function Footer() {
                   to="/testimonials"
                   className="text-gray-600 hover:text-rose-700 transition-colors"
                 >
-                  Testimonials
+                  {t("footer.testimonials")}
                 </Link>
               </li>
               <li>
@@ -116,25 +122,27 @@ export default function Footer() {
                   to="/privacy"
                   className="text-gray-600 hover:text-rose-700 transition-colors"
                 >
-                  Privacy Policy
+                  {t("footer.privacyPolicy")}
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <h3 className="font-medium text-gray-900 mb-4">Contact</h3>
+            <h3 className="font-medium text-gray-900 mb-4">
+              {t("footer.contact")}
+            </h3>
             <ul className="space-y-2 text-sm">
               <li className="text-gray-600">
-                123 Community Lane
+                {t("footer.address.line1")}
                 <br />
-                Careville, CA 90210
+                {t("footer.address.line2")}
               </li>
               <li>
                 <a
                   href="tel:+11234567890"
                   className="text-gray-600 hover:text-rose-700 transition-colors"
                 >
-                  (123) 456-7890
+                  {t("footer.phone")}
                 </a>
               </li>
               <li>
@@ -142,7 +150,7 @@ export default function Footer() {
                   href="mailto:info@villagecare.com"
                   className="text-gray-600 hover:text-rose-700 transition-colors"
                 >
-                  info@villagecare.com
+                  {t("footer.email")}
                 </a>
               </li>
             </ul>
@@ -150,11 +158,12 @@ export default function Footer() {
         </div>
         <div className="border-t border-gray-100 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} VillageCare. All rights reserved.
+            {t("footer.copyright", { year: new Date().getFullYear() })}
           </p>
           <p className="text-sm text-gray-500 mt-4 md:mt-0 flex items-center">
-            Made with <Heart className="h-4 w-4 text-rose-500 mx-1" /> for our
-            community
+            {t("footer.madeWith")}{" "}
+            <Heart className="h-4 w-4 text-rose-500 mx-1" />{" "}
+            {t("footer.forCommunity")}
           </p>
         </div>
       </div>

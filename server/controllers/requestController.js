@@ -62,31 +62,34 @@ export const getElderRequests = async (req, res) => {
           r.details,
           r.urgent,
           r.status,
+
+          -- Service Info
           s.id AS service_id,
-          s.name AS service_name,
-          
+          s.name_en AS service_name_en,
+          s.name_ar AS service_name_ar,
+          s.name_fr AS service_name_fr,
+
           -- Elder Info
           e.first_name AS elder_first_name,
           e.last_name AS elder_last_name,
           e.profile_image_url AS elder_profile_image_url,
           e.gender AS elder_gender,
-  
+
           -- Volunteer Info
           v.first_name AS volunteer_first_name,
           v.last_name AS volunteer_last_name,
           v.profile_image_url AS volunteer_profile_image_url,
-          v.gender AS elder_gender,
+          v.gender AS volunteer_gender,
           v.rating AS volunteer_rating,
           v.review_count AS volunteer_review_count
- 
-  
+
         FROM requests r
         JOIN services s ON r.service_id = s.id
         JOIN users e ON r.elder_id = e.id
         JOIN users v ON r.volunteer_id = v.id
         WHERE r.elder_id = $1
         ORDER BY r.created_at DESC
-        `,
+      `,
       [id]
     );
 
@@ -112,29 +115,29 @@ export const getVolunteerRequests = async (req, res) => {
           r.urgent,
           r.status,
           s.id AS service_id,
-          s.name AS service_name,
-  
+          s.name_en AS service_name, -- Replace 'name' with 'name_en', 'name_ar', or 'name_fr'
+
           -- Elder Info
           e.first_name AS elder_first_name,
           e.last_name AS elder_last_name,
           e.profile_image_url AS elder_profile_image_url,
           e.gender AS elder_gender,
-  
+
           -- Volunteer Info
           v.first_name AS volunteer_first_name,
           v.last_name AS volunteer_last_name,
           v.profile_image_url AS volunteer_profile_image_url,
-          v.gender AS elder_gender,
+          v.gender AS volunteer_gender,  -- Corrected the mislabeling of gender column
           v.rating AS volunteer_rating,
           v.review_count AS volunteer_review_count
-  
+
         FROM requests r
         JOIN services s ON r.service_id = s.id
         JOIN users e ON r.elder_id = e.id
         JOIN users v ON r.volunteer_id = v.id
         WHERE r.volunteer_id = $1
         ORDER BY r.created_at DESC
-        `,
+      `,
       [id]
     );
 
@@ -191,25 +194,48 @@ export const updateRequestStatus = async (req, res) => {
     const volunteer = volunteerResult.rows[0];
     const fullName = `${volunteer.first_name} ${volunteer.last_name}`;
 
-    // 3. Compose personalized message
+    // 3. Determine the recipient and compose personalized message
     let message = null;
-    let recipientId = elderId;
+    let recipientId = null;
 
-    switch (status) {
-      case "accepted":
-        message = `Your request has been accepted by ${fullName}.`;
-        break;
-      case "rejected":
-        message = `Your request has been rejected by ${fullName}.`;
-        break;
-      case "canceled":
-        message = `${fullName} has canceled your request.`;
-        break;
-      case "completed":
-        message = `${fullName} marked your request as completed.`;
-        break;
-      default:
-        break;
+    if (req.user.id === volunteerId) {
+      // Volunteer is changing the status
+      recipientId = elderId;
+      switch (status) {
+        case "accepted":
+          message = `Your request has been accepted by ${fullName}.`;
+          break;
+        case "rejected":
+          message = `Your request has been rejected by ${fullName}.`;
+          break;
+        case "canceled":
+          message = `${fullName} has canceled your request.`;
+          break;
+        case "completed":
+          message = `${fullName} marked your request as completed.`;
+          break;
+        default:
+          break;
+      }
+    } else if (req.user.id === elderId) {
+      // Elder is changing the status
+      recipientId = volunteerId;
+      switch (status) {
+        case "accepted":
+          message = `You have accepted the request from ${fullName}.`;
+          break;
+        case "rejected":
+          message = `You have rejected the request from ${fullName}.`;
+          break;
+        case "canceled":
+          message = `You have canceled the request from ${fullName}.`;
+          break;
+        case "completed":
+          message = `You marked the request from ${fullName} as completed.`;
+          break;
+        default:
+          break;
+      }
     }
 
     // 4. Insert notification

@@ -1,19 +1,20 @@
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
-import { ArrowRight, ArrowRightCircle, Gauge } from "lucide-react";
+import { ArrowRight, Gauge } from "lucide-react";
 import { useUserData } from "../contexts/UserContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 export default function HeroSection() {
   const { userData, currentRole } = useUserData();
   const { isAuthenticated } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <section
       id="top"
       className="relative w-full py-20 md:py-32 overflow-hidden"
     >
-      {/* Background decorative elements */}
       <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-rose-200 rounded-full opacity-20 blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-rose-300 rounded-full opacity-20 blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
 
@@ -21,30 +22,28 @@ export default function HeroSection() {
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
           <div className="space-y-6 max-w-[600px]">
             <div className="inline-block px-4 py-1.5 bg-rose-100 text-rose-800 rounded-full text-sm font-medium mb-2 animate-fade-in">
-              Connecting hearts & hands
+              {t("landing.hero.tagline")}
             </div>
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-rose-900 via-rose-700 to-rose-800">
-              Bridging Generations Through Care
+              {t("landing.hero.title")}
             </h1>
             <p className="max-w-[600px] text-gray-600 md:text-xl leading-relaxed">
-              VillageCare creates meaningful connections between elders and
-              volunteers, fostering a community where compassion meets
-              companionship.
+              {t("landing.hero.description")}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               {isAuthenticated ? (
                 <Link to="/dashboard">
-                  <Button className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg shadow-rose-200 transition-all hover:shadow-xl hover:shadow-rose-300 hover:-translate-y-1">
+                  <Button className="w-full bg-rose-600 hover:bg-rose-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg shadow-rose-200 transition-all hover:shadow-xl hover:shadow-rose-300 hover:-translate-y-1">
                     {currentRole === "elder"
-                      ? "My Care Dashboard"
-                      : "My Volunteer Dashboard"}
+                      ? t("landing.hero.elderDashboard")
+                      : t("landing.hero.volunteerDashboard")}
                     <Gauge className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
               ) : (
                 <Link to="/auth/register">
-                  <Button className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg shadow-rose-200 transition-all hover:shadow-xl hover:shadow-rose-300 hover:-translate-y-1">
-                    Join Our Community
+                  <Button className="w-full bg-rose-600 hover:bg-rose-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg shadow-rose-200 transition-all hover:shadow-xl hover:shadow-rose-300 hover:-translate-y-1">
+                    {t("landing.hero.joinButton")}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
@@ -52,16 +51,20 @@ export default function HeroSection() {
               <a href="#how-it-works">
                 <Button
                   variant="outline"
-                  className="px-8 py-6 text-lg rounded-xl border-2 border-rose-200 hover:border-rose-300 hover:bg-rose-50 transition-all"
+                  className="w-full px-8 py-6 text-lg rounded-xl border-2 border-rose-200 hover:border-rose-300 hover:bg-rose-50 transition-all"
                 >
-                  Learn More
+                  {t("landing.hero.learnMoreButton")}
                 </Button>
               </a>
             </div>
             {isAuthenticated && (
               <div className="text-sm text-gray-500 pt-2">
-                Welcome back, {userData?.first_name}! You're in{" "}
-                {currentRole === "elder" ? "elder" : "volunteer"} mode.
+                {t("landing.hero.welcomeBack", { name: userData?.first_name })}{" "}
+                {t(
+                  currentRole === "elder"
+                    ? "landing.hero.elderMode"
+                    : "landing.hero.volunteerMode"
+                )}
               </div>
             )}
           </div>
@@ -70,16 +73,15 @@ export default function HeroSection() {
             <div className="relative h-[500px] w-full rounded-3xl overflow-hidden shadow-2xl">
               <img
                 src="/hero.png"
-                alt="Elderly person with a volunteer"
+                alt={t("landing.hero.imageAlt")}
                 className="object-cover w-full h-full"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-rose-900/30 to-transparent"></div>
 
-              {/* Floating testimonial card */}
               <div className="absolute bottom-6 right-6 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg max-w-[260px] transform hover:-translate-y-1 transition-transform">
                 <div className="flex items-center space-x-3 mb-2">
                   <div className="h-10 w-10 rounded-full bg-rose-200 flex items-center justify-center">
-                    <span className="text-rose-700 font-bold">EM</span>
+                    <span className="text-rose-700 font-bold">NM</span>
                   </div>
                   <div>
                     <p className="text-sm font-medium">Nada M.</p>
@@ -98,8 +100,7 @@ export default function HeroSection() {
                   </div>
                 </div>
                 <p className="text-sm italic text-gray-700">
-                  "VillageCare has brought joy back into my life. My volunteer
-                  visits are the highlight of my week."
+                  {t("landing.hero.testimonialQuote")}
                 </p>
               </div>
             </div>

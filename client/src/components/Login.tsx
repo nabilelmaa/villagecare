@@ -1,3 +1,5 @@
+import type React from "react";
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
@@ -15,18 +17,22 @@ import { HeartHandshake, Loader2 } from "lucide-react";
 import { useToast } from "../contexts/ToastContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useUserData } from "../contexts/UserContext";
+import { useTranslation } from "react-i18next";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { showToast } = useToast();
   const { fetchUserData } = useUserData();
+  const { t, i18n } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  const isRTL = i18n.dir() === "rtl";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -69,14 +75,9 @@ const LoginPage = () => {
       sessionStorage.removeItem("redirectUrl");
       navigate(safeRedirectUrl, { replace: true });
 
-      showToast("Successfully logged in to your account.", "success");
+      showToast(t("auth.loginSuccess"), "success");
     } catch (err) {
-      showToast(
-        err instanceof Error
-          ? err.message
-          : "Invalid email or password. Please try again.",
-        "error"
-      );
+      showToast(t("auth.invalidCredentials"), "error");
     } finally {
       setIsLoading(false);
     }
@@ -103,30 +104,36 @@ const LoginPage = () => {
         <div className="relative">
           <CardHeader className="space-y-1 pb-6">
             <CardTitle className="text-2xl font-bold text-center text-rose-900">
-              Welcome Back
+              {t("auth.welcomeBack")}
             </CardTitle>
             <CardDescription className="text-center text-gray-600">
-              Enter your credentials to access your account
+              {t("auth.enterCredentials")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-gray-700">
-                  Email
+                  {t("auth.email")}
                 </Label>
                 <div className="relative">
                   <Input
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="name@example.com"
+                    placeholder={t("auth.emailPlaceholder")}
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="pl-10 bg-white/70 backdrop-blur-sm border-rose-100 focus:border-rose-300 focus:ring-rose-200"
+                    className={`${
+                      isRTL ? "pr-10" : "pl-10"
+                    } bg-white/70 backdrop-blur-sm border-rose-100 focus:border-rose-300 focus:ring-rose-200`}
                   />
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <div
+                    className={`absolute ${
+                      isRTL ? "right-3" : "left-3"
+                    } top-1/2 transform -translate-y-1/2 text-gray-400`}
+                  >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-5 w-5"
@@ -147,13 +154,13 @@ const LoginPage = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-gray-700">
-                    Password
+                    {t("auth.password")}
                   </Label>
                   <Link
                     to="/forgot-password"
                     className="text-xs text-rose-600 hover:text-rose-800 hover:underline"
                   >
-                    Forgot password?
+                    {t("auth.forgotPassword")}
                   </Link>
                 </div>
                 <div className="relative">
@@ -164,9 +171,15 @@ const LoginPage = () => {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="pl-10 bg-white/70 backdrop-blur-sm border-rose-100 focus:border-rose-300 focus:ring-rose-200"
+                    className={`${
+                      isRTL ? "pr-10" : "pl-10"
+                    } bg-white/70 backdrop-blur-sm border-rose-100 focus:border-rose-300 focus:ring-rose-200`}
                   />
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <div
+                    className={`absolute ${
+                      isRTL ? "right-3" : "left-3"
+                    } top-1/2 transform -translate-y-1/2 text-gray-400`}
+                  >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-5 w-5"
@@ -185,9 +198,13 @@ const LoginPage = () => {
                   <button
                     type="button"
                     onClick={togglePasswordVisibility}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    className={`absolute ${
+                      isRTL ? "left-3" : "right-3"
+                    } top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none`}
                     aria-label={
-                      showPassword ? "Hide password" : "Show password"
+                      showPassword
+                        ? t("auth.hidePassword")
+                        : t("auth.showPassword")
                     }
                   >
                     {showPassword ? (
@@ -238,10 +255,10 @@ const LoginPage = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Signing in...
+                    {t("auth.signingIn")}
                   </>
                 ) : (
-                  "Sign in"
+                  t("auth.login")
                 )}
               </Button>
             </form>
@@ -253,12 +270,12 @@ const LoginPage = () => {
             </div>
 
             <div className="text-sm text-center text-gray-500 mt-6">
-              Don&apos;t have an account?{" "}
+              {t("auth.noAccount")}{" "}
               <Link
                 to="/auth/register"
                 className="text-rose-600 hover:text-rose-800 font-medium hover:underline"
               >
-                Sign up
+                {t("auth.signup")}
               </Link>
             </div>
           </CardFooter>
@@ -266,13 +283,13 @@ const LoginPage = () => {
       </Card>
 
       <p className="mt-8 text-center text-xs text-gray-500 max-w-md">
-        By signing in, you agree to our{" "}
+        {t("auth.termsNotice")}{" "}
         <Link to="#" className="text-rose-600 hover:underline">
-          Terms of Service
+          {t("settings.termsOfService")}
         </Link>{" "}
-        and{" "}
+        {t("common.and")}{" "}
         <Link to="#" className="text-rose-600 hover:underline">
-          Privacy Policy
+          {t("settings.privacyPolicy")}
         </Link>
         .
       </p>

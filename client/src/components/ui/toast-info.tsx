@@ -3,7 +3,7 @@ import { ToastProps } from "../../types/index";
 export const ToastInfo = ({ body }: ToastProps) => {
   return (
     <div
-      className="bg-blue-500 text-white tracking-wide flex items-center w-max max-w-sm p-3 rounded-xl shadow-blue-200"
+      className="bg-blue-500 rounded-sm text-white tracking-wide flex items-center w-max max-w-sm p-3 shadow-blue-200"
       role="alert"
     >
       <svg

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -15,15 +16,7 @@ import {
   TabsTrigger,
 } from "../components/ui/tabs";
 import { Badge } from "../components/ui/badge";
-import {
-  Clock,
-  Star,
-  Filter,
-  Search,
-  Loader2,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
+import { Clock, Star, Filter, Search, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Input } from "../components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import {
@@ -57,6 +50,7 @@ interface ApiRequest {
 }
 
 export default function RequestsPage() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -66,7 +60,7 @@ export default function RequestsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<number | null>(null);
 
-  const { userData, currentRole } = useUserData();
+  const { currentRole } = useUserData();
   const { showToast } = useToast();
 
   const fetchRequests = async () => {
@@ -74,7 +68,7 @@ export default function RequestsPage() {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        showToast("Please log in again", "error");
+        showToast(t("common.error"), "error");
         return;
       }
 
@@ -92,12 +86,11 @@ export default function RequestsPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch requests");
+        throw new Error(t("requests.fetchFailed"));
       }
 
       const data = await response.json();
 
-      // Set default status to "pending" if not provided
       const requestsWithStatus = (data.requests || []).map(
         (req: ApiRequest) => ({
           ...req,
@@ -109,7 +102,7 @@ export default function RequestsPage() {
       setFilteredRequests(requestsWithStatus);
     } catch (error) {
       console.error("Error fetching requests:", error);
-      showToast("Failed to load requests", "error");
+      showToast(t("requests.fetchFailed"), "error");
     } finally {
       setIsLoading(false);
     }
@@ -120,7 +113,7 @@ export default function RequestsPage() {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        showToast("Please log in again", "error");
+        showToast(t("common.error"), "error");
         return;
       }
 
@@ -137,28 +130,28 @@ export default function RequestsPage() {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to update request status");
+        throw new Error(t("requests.updateFailed"));
       }
 
-      let statusVerb = "";
+      let statusMessage = "";
       switch (status) {
         case "accepted":
-          statusVerb = "accepted";
+          statusMessage = t("requests.statusAccepted");
           break;
         case "rejected":
-          statusVerb = "rejected";
+          statusMessage = t("requests.statusRejected");
           break;
         case "completed":
-          statusVerb = "completed";
+          statusMessage = t("requests.statusCompleted");
           break;
         case "canceled":
-          statusVerb = "canceled";
+          statusMessage = t("requests.statusCanceled");
           break;
         default:
-          statusVerb = "updated";
+          statusMessage = t("requests.statusUpdated");
       }
 
-      showToast(`Request ${statusVerb} successfully`, "success");
+      showToast(statusMessage, "success");
 
       setRequests((prevRequests) =>
         prevRequests.map((req) =>
@@ -172,7 +165,7 @@ export default function RequestsPage() {
       showToast(
         error instanceof Error
           ? error.message
-          : "An error occurred while updating the request",
+          : t("requests.updateFailed"),
         "error"
       );
     } finally {
@@ -198,12 +191,12 @@ export default function RequestsPage() {
       );
     }
 
-    // Filter by status
+
     if (statusFilter !== "all") {
       filtered = filtered.filter((req) => req.status === statusFilter);
     }
 
-    // Filter by tab
+
     if (activeTab === "pending") {
       filtered = filtered.filter((req) => req.status === "pending");
     } else if (activeTab === "active") {
@@ -215,24 +208,24 @@ export default function RequestsPage() {
     setFilteredRequests(filtered);
   };
 
-  // Fetch requests on component mount
+
   useEffect(() => {
     fetchRequests();
   }, [currentRole]);
 
-  // Apply filters when search term, status filter, or active tab changes
+
   useEffect(() => {
     filterRequests();
   }, [searchTerm, statusFilter, activeTab, requests]);
 
-  // Format day and time for display
+
   const formatDayAndTime = (day: string, time: string): string => {
-    const formattedDay = day.charAt(0).toUpperCase() + day.slice(1);
-    const formattedTime = time.charAt(0).toUpperCase() + time.slice(1);
-    return `${formattedDay}s, ${formattedTime}`;
+    const formattedDay = t(`days.${day}`);
+    const formattedTime = t(`timeOfDay.${time}`);
+    return `${formattedDay}, ${formattedTime}`;
   };
 
-  // Get status badge color
+
   const getStatusBadgeClass = (status: string): string => {
     switch (status) {
       case "pending":
@@ -250,13 +243,30 @@ export default function RequestsPage() {
     }
   };
 
+  const getStatusTranslation = (status: string): string => {
+    switch (status) {
+      case "pending":
+        return t("requests.pending");
+      case "accepted":
+        return t("requests.accepted");
+      case "completed":
+        return t("requests.completed");
+      case "rejected":
+        return t("requests.rejected");
+      case "canceled":
+        return t("requests.cancelled");
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <Loader2 className="mx-auto h-12 w-12 animate-spin text-rose-600" />
           <p className="mt-4 text-lg font-medium text-gray-700">
-            Loading requests...
+            {t("requests.loading")}
           </p>
         </div>
       </div>
@@ -268,11 +278,11 @@ export default function RequestsPage() {
       <div className="flex flex-col space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Requests</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t("requests.title")}</h1>
             <p className="text-gray-500">
               {currentRole === "elder"
-                ? "Manage your service requests"
-                : "Manage help requests from elders"}
+                ? t("requests.manageYourRequests")
+                : t("requests.manageElderRequests")}
             </p>
           </div>
         </div>
@@ -282,7 +292,7 @@ export default function RequestsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <Input
-                placeholder="Search by service, details, or name..."
+                placeholder={t("requests.searchPlaceholder")}
                 className="pl-10 py-6 bg-gray-50 border-gray-100 rounded-xl"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -294,10 +304,10 @@ export default function RequestsPage() {
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="h-5 w-5" />
-              Filters
+              {t("common.filter")}
               {statusFilter !== "all" && (
                 <Badge className="ml-2 bg-rose-100 text-rose-800 hover:bg-rose-200">
-                  Active
+                  {t("dashboard.active")}
                 </Badge>
               )}
             </Button>
@@ -308,19 +318,19 @@ export default function RequestsPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Status
+                    {t("requests.status")}
                   </label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="bg-gray-50 border-gray-100">
-                      <SelectValue placeholder="Filter by status" />
+                      <SelectValue placeholder={t("requests.filterByStatus")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="accepted">Accepted</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                      <SelectItem value="canceled">Canceled</SelectItem>
+                      <SelectItem value="all">{t("requests.allStatuses")}</SelectItem>
+                      <SelectItem value="pending">{t("requests.pending")}</SelectItem>
+                      <SelectItem value="accepted">{t("requests.accepted")}</SelectItem>
+                      <SelectItem value="completed">{t("requests.completed")}</SelectItem>
+                      <SelectItem value="rejected">{t("requests.rejected")}</SelectItem>
+                      <SelectItem value="canceled">{t("requests.cancelled")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -339,13 +349,13 @@ export default function RequestsPage() {
               value="all"
               className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
             >
-              All
+              {t("requests.all")}
             </TabsTrigger>
             <TabsTrigger
               value="pending"
               className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
             >
-              Pending
+              {t("requests.pending")}
               <Badge className="ml-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
                 {requests.filter((r) => r.status === "pending").length}
               </Badge>
@@ -354,7 +364,7 @@ export default function RequestsPage() {
               value="active"
               className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
             >
-              Active
+              {t("requests.active")}
               <Badge className="ml-2 bg-blue-100 text-blue-800 hover:bg-blue-100">
                 {requests.filter((r) => r.status === "accepted").length}
               </Badge>
@@ -363,7 +373,7 @@ export default function RequestsPage() {
               value="completed"
               className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
             >
-              Completed
+              {t("requests.completed")}
             </TabsTrigger>
           </TabsList>
 
@@ -374,13 +384,13 @@ export default function RequestsPage() {
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                     <Search className="h-8 w-8 text-gray-400" />
                   </div>
-                  <p className="text-gray-500 mb-4">No requests found.</p>
+                  <p className="text-gray-500 mb-4">{t("requests.noRequests")}</p>
                   {currentRole === "elder" && (
                     <Button
                       className="bg-rose-600 hover:bg-rose-700"
                       onClick={() => (window.location.href = "/dashboard")}
                     >
-                      Find Volunteers
+                      {t("requests.findVolunteers")}
                     </Button>
                   )}
                 </CardContent>
@@ -407,14 +417,14 @@ export default function RequestsPage() {
                             {request.service_name}
                             {request.urgent && (
                               <Badge className="ml-2 bg-rose-100 text-rose-800 hover:bg-rose-100 border border-rose-200">
-                                Urgent
+                                {t("requests.urgent")}
                               </Badge>
                             )}
                           </CardTitle>
                           <CardDescription>
                             {currentRole === "elder"
-                              ? `Volunteer: ${request.volunteer_first_name} ${request.volunteer_last_name}`
-                              : `Requested by: ${request.elder_first_name} ${request.elder_last_name}`}
+                              ? `${t("requests.volunteer")}: ${request.volunteer_first_name} ${request.volunteer_last_name}`
+                              : `${t("requests.requestedBy")}: ${request.elder_first_name} ${request.elder_last_name}`}
                           </CardDescription>
                         </div>
                         <Badge
@@ -422,10 +432,7 @@ export default function RequestsPage() {
                             request.status || "pending"
                           )}`}
                         >
-                          {request.status
-                            ? request.status.charAt(0).toUpperCase() +
-                              request.status.slice(1)
-                            : "Pending"}
+                          {getStatusTranslation(request.status || "pending")}
                         </Badge>
                       </div>
                     </CardHeader>
@@ -503,7 +510,7 @@ export default function RequestsPage() {
                               ) : (
                                 <XCircle className="h-4 w-4 mr-1.5" />
                               )}
-                              Cancel
+                              {t("requests.cancel")}
                             </Button>
                           )}
 
@@ -522,7 +529,7 @@ export default function RequestsPage() {
                               ) : (
                                 <CheckCircle className="h-4 w-4 mr-1.5" />
                               )}
-                              Mark as Completed
+                              {t("requests.markAsCompleted")}
                             </Button>
                           )}
                         </>
@@ -548,7 +555,7 @@ export default function RequestsPage() {
                                 ) : (
                                   <XCircle className="h-4 w-4 mr-1.5" />
                                 )}
-                                Reject
+                                {t("requests.reject")}
                               </Button>
                               <Button
                                 variant="outline"
@@ -564,12 +571,11 @@ export default function RequestsPage() {
                                 ) : (
                                   <CheckCircle className="h-4 w-4 mr-1.5" />
                                 )}
-                                Accept
+                                {t("requests.accept")}
                               </Button>
                             </>
                           )}
 
-                          {/* Volunteer can cancel accepted requests */}
                           {request.status === "accepted" && (
                             <Button
                               variant="outline"
@@ -585,7 +591,7 @@ export default function RequestsPage() {
                               ) : (
                                 <XCircle className="h-4 w-4 mr-1.5" />
                               )}
-                              Cancel
+                              {t("requests.cancel")}
                             </Button>
                           )}
                         </>

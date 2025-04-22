@@ -18,6 +18,9 @@ export interface User {
 export interface Service {
   id: number
   name: string
+  name_en: string
+  name_fr: string
+  name_ar: string
   description: string | null
   created_at: string
   updated_at: string
