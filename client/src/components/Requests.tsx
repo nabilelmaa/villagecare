@@ -625,10 +625,10 @@ export default function RequestsPage() {
                           <p className="text-xs text-gray-500 mr-2">
                             {currentRole === "elder"
                               ? `${t("requests.volunteerPhone")}: ${
-                                  request.volunteer_phone_number
+                                  request?.volunteer_phone_number
                                 }`
                               : `${t("requests.elderPhone")}: ${
-                                  request.elder_phone_number
+                                  request?.elder_phone_number
                                 }`}
                           </p>
                           <Button
@@ -638,8 +638,8 @@ export default function RequestsPage() {
                             onClick={() => {
                               const phoneNumber =
                                 currentRole === "elder"
-                                  ? request.volunteer_phone_number
-                                  : request.elder_phone_number;
+                                  ? request?.volunteer_phone_number
+                                  : request?.elder_phone_number;
                               window.open(
                                 `https://wa.me/${phoneNumber.replace(
                                   /\D/g,
@@ -659,8 +659,8 @@ export default function RequestsPage() {
                             onClick={() => {
                               const phoneNumber =
                                 currentRole === "elder"
-                                  ? request.volunteer_phone_number
-                                  : request.elder_phone_number;
+                                  ? request?.volunteer_phone_number
+                                  : request?.elder_phone_number;
                               window.location.href = `tel:${phoneNumber}`;
                             }}
                           >
