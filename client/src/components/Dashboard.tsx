@@ -1391,23 +1391,25 @@ export default function DashboardPage() {
                           <CardHeader className="p-4 sm:p-6">
                             <CardTitle className="text-lg sm:text-xl font-semibold flex items-center justify-between">
                               {volunteer.first_name} {volunteer.last_name}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="hover:bg-gray-100 rounded-full p-1.5 sm:p-2 -mr-1.5 sm:-mr-2"
-                                onClick={() =>
-                                  toggleFavorite(
-                                    volunteer.id,
-                                    volunteer.isFavorite || false
-                                  )
-                                }
-                              >
-                                {volunteer.isFavorite ? (
-                                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-rose-500 fill-rose-500" />
-                                ) : (
-                                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
-                                )}
-                              </Button>
+                              {userData?.id !== volunteer.id && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="hover:bg-gray-100 rounded-full p-1.5 sm:p-2 -mr-1.5 sm:-mr-2"
+                                  onClick={() =>
+                                    toggleFavorite(
+                                      volunteer.id,
+                                      volunteer.isFavorite || false
+                                    )
+                                  }
+                                >
+                                  {volunteer.isFavorite ? (
+                                    <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-rose-500 fill-rose-500" />
+                                  ) : (
+                                    <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                                  )}
+                                </Button>
+                              )}
                             </CardTitle>
                           </CardHeader>
                           <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
@@ -1473,15 +1475,17 @@ export default function DashboardPage() {
                             </div>
                           </CardContent>
                           <CardFooter className="flex justify-between items-center p-4 sm:p-6">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className="text-xs sm:text-sm px-2 sm:px-3 py-1 h-8 sm:h-9"
-                              onClick={() => openReviewsModal(volunteer)}
-                            >
-                              <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                              {t("dashboard.reviews")}
-                            </Button>
+                            {userData?.id !== volunteer.id && (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="text-xs sm:text-sm px-2 sm:px-3 py-1 h-8 sm:h-9"
+                                onClick={() => openReviewsModal(volunteer)}
+                              >
+                                <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                {t("dashboard.reviews")}
+                              </Button>
+                            )}
                             {currentRole === "elder" && (
                               <Button
                                 size="sm"

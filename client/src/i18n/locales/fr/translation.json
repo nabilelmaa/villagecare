@@ -296,6 +296,7 @@
         "upcomingAppointments": "Rendez-vous à venir",
         "volunteerFound": "Bénévole trouvé avec succès!",
         "noVolunteerFound": "Aucun bénévole trouvé. Veuillez réessayer.",
+        "availabilityNotSpecified": "Disponibilité non spécifiée",
         "reviews": "Avis",
         "reviewSubmitted": "Avis soumis avec succès",
         "reviewNotSubmitted": "Échec de l'envoi de l'avis",

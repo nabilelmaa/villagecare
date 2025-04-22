@@ -297,6 +297,7 @@
         "upcomingAppointments": "Upcoming Appointments",
         "volunteerFound": "Volunteer found successfully!",
         "noVolunteerFound": "No volunteer found. Please try again.",
+        "availabilityNotSpecified": "Availability not specified",
         "reviews": "Reviews",
         "reviewSubmitted": "Review submitted successfully",
         "reviewNotSubmitted": "Failed to submit review",
