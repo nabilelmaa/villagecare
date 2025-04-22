@@ -74,6 +74,7 @@ export const getElderRequests = async (req, res) => {
           e.last_name AS elder_last_name,
           e.profile_image_url AS elder_profile_image_url,
           e.gender AS elder_gender,
+          e.phone_number AS elder_phone_number,
 
           -- Volunteer Info
           v.first_name AS volunteer_first_name,
@@ -81,7 +82,8 @@ export const getElderRequests = async (req, res) => {
           v.profile_image_url AS volunteer_profile_image_url,
           v.gender AS volunteer_gender,
           v.rating AS volunteer_rating,
-          v.review_count AS volunteer_review_count
+          v.review_count AS volunteer_review_count,
+          v.phone_number AS volunteer_phone_number
 
         FROM requests r
         JOIN services s ON r.service_id = s.id
@@ -122,6 +124,7 @@ export const getVolunteerRequests = async (req, res) => {
           e.last_name AS elder_last_name,
           e.profile_image_url AS elder_profile_image_url,
           e.gender AS elder_gender,
+           e.phone_number AS elder_phone_number,
 
           -- Volunteer Info
           v.first_name AS volunteer_first_name,
@@ -129,7 +132,8 @@ export const getVolunteerRequests = async (req, res) => {
           v.profile_image_url AS volunteer_profile_image_url,
           v.gender AS volunteer_gender,  -- Corrected the mislabeling of gender column
           v.rating AS volunteer_rating,
-          v.review_count AS volunteer_review_count
+          v.review_count AS volunteer_review_count,
+          v.phone_number AS volunteer_phone_number
 
         FROM requests r
         JOIN services s ON r.service_id = s.id

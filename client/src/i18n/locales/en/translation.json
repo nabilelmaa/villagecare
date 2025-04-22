@@ -137,7 +137,11 @@
         "statusRejected": "Request rejected successfully",
         "statusCompleted": "Request completed successfully",
         "statusCanceled": "Request canceled successfully",
-        "statusUpdated": "Request updated successfully"
+        "statusUpdated": "Request updated successfully",
+        "whatsapp": "WhatsApp",
+        "call": "Call",
+        "volunteerPhone": "Volunteer Phone",
+        "elderPhone": "Elder Phone"
     },
     "favorites": {
         "title": "Mes Favoris",

@@ -392,7 +392,11 @@
         "statusRejected": "تم رفض الطلب بنجاح",
         "statusCompleted": "تم إكمال الطلب بنجاح",
         "statusCanceled": "تم إلغاء الطلب بنجاح",
-        "statusUpdated": "تم تحديث الطلب بنجاح"
+        "statusUpdated": "تم تحديث الطلب بنجاح",
+        "whatsapp": "واتساب",
+        "call": "اتصال",
+        "volunteerPhone": "هاتف المتطوع",
+        "elderPhone": "هاتف كبير السن"
     },
     "favorites": {
         "title": "المفضلة",

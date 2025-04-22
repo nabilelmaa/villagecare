@@ -16,7 +16,17 @@ import {
   TabsTrigger,
 } from "../components/ui/tabs";
 import { Badge } from "../components/ui/badge";
-import { Clock, Star, Filter, Search, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import {
+  Clock,
+  Star,
+  Filter,
+  Search,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Phone,
+  MessageSquare,
+} from "lucide-react";
 import { Input } from "../components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import {
@@ -47,6 +57,8 @@ interface ApiRequest {
   volunteer_rating: string;
   volunteer_review_count: number;
   status?: string;
+  volunteer_phone_number: string;
+  elder_phone_number: string;
 }
 
 export default function RequestsPage() {
@@ -163,9 +175,7 @@ export default function RequestsPage() {
     } catch (error) {
       console.error("Error updating request status:", error);
       showToast(
-        error instanceof Error
-          ? error.message
-          : t("requests.updateFailed"),
+        error instanceof Error ? error.message : t("requests.updateFailed"),
         "error"
       );
     } finally {
@@ -191,11 +201,9 @@ export default function RequestsPage() {
       );
     }
 
-
     if (statusFilter !== "all") {
       filtered = filtered.filter((req) => req.status === statusFilter);
     }
-
 
     if (activeTab === "pending") {
       filtered = filtered.filter((req) => req.status === "pending");
@@ -208,23 +216,19 @@ export default function RequestsPage() {
     setFilteredRequests(filtered);
   };
 
-
   useEffect(() => {
     fetchRequests();
   }, [currentRole]);
 
-
   useEffect(() => {
     filterRequests();
   }, [searchTerm, statusFilter, activeTab, requests]);
-
 
   const formatDayAndTime = (day: string, time: string): string => {
     const formattedDay = t(`days.${day}`);
     const formattedTime = t(`timeOfDay.${time}`);
     return `${formattedDay}, ${formattedTime}`;
   };
-
 
   const getStatusBadgeClass = (status: string): string => {
     switch (status) {
@@ -278,7 +282,9 @@ export default function RequestsPage() {
       <div className="flex flex-col space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{t("requests.title")}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {t("requests.title")}
+            </h1>
             <p className="text-gray-500">
               {currentRole === "elder"
                 ? t("requests.manageYourRequests")
@@ -325,12 +331,24 @@ export default function RequestsPage() {
                       <SelectValue placeholder={t("requests.filterByStatus")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">{t("requests.allStatuses")}</SelectItem>
-                      <SelectItem value="pending">{t("requests.pending")}</SelectItem>
-                      <SelectItem value="accepted">{t("requests.accepted")}</SelectItem>
-                      <SelectItem value="completed">{t("requests.completed")}</SelectItem>
-                      <SelectItem value="rejected">{t("requests.rejected")}</SelectItem>
-                      <SelectItem value="canceled">{t("requests.cancelled")}</SelectItem>
+                      <SelectItem value="all">
+                        {t("requests.allStatuses")}
+                      </SelectItem>
+                      <SelectItem value="pending">
+                        {t("requests.pending")}
+                      </SelectItem>
+                      <SelectItem value="accepted">
+                        {t("requests.accepted")}
+                      </SelectItem>
+                      <SelectItem value="completed">
+                        {t("requests.completed")}
+                      </SelectItem>
+                      <SelectItem value="rejected">
+                        {t("requests.rejected")}
+                      </SelectItem>
+                      <SelectItem value="canceled">
+                        {t("requests.cancelled")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -384,7 +402,9 @@ export default function RequestsPage() {
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                     <Search className="h-8 w-8 text-gray-400" />
                   </div>
-                  <p className="text-gray-500 mb-4">{t("requests.noRequests")}</p>
+                  <p className="text-gray-500 mb-4">
+                    {t("requests.noRequests")}
+                  </p>
                   {currentRole === "elder" && (
                     <Button
                       className="bg-rose-600 hover:bg-rose-700"
@@ -423,8 +443,12 @@ export default function RequestsPage() {
                           </CardTitle>
                           <CardDescription>
                             {currentRole === "elder"
-                              ? `${t("requests.volunteer")}: ${request.volunteer_first_name} ${request.volunteer_last_name}`
-                              : `${t("requests.requestedBy")}: ${request.elder_first_name} ${request.elder_last_name}`}
+                              ? `${t("requests.volunteer")}: ${
+                                  request.volunteer_first_name
+                                } ${request.volunteer_last_name}`
+                              : `${t("requests.requestedBy")}: ${
+                                  request.elder_first_name
+                                } ${request.elder_last_name}`}
                           </CardDescription>
                         </div>
                         <Badge
@@ -595,6 +619,55 @@ export default function RequestsPage() {
                             </Button>
                           )}
                         </>
+                      )}
+                      {request.status === "accepted" && (
+                        <div className="flex items-center gap-2 ml-auto">
+                          <p className="text-xs text-gray-500 mr-2">
+                            {currentRole === "elder"
+                              ? `${t("requests.volunteerPhone")}: ${
+                                  request.volunteer_phone_number
+                                }`
+                              : `${t("requests.elderPhone")}: ${
+                                  request.elder_phone_number
+                                }`}
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-lg border-green-200 text-green-700 hover:bg-green-50"
+                            onClick={() => {
+                              const phoneNumber =
+                                currentRole === "elder"
+                                  ? request.volunteer_phone_number
+                                  : request.elder_phone_number;
+                              window.open(
+                                `https://wa.me/${phoneNumber.replace(
+                                  /\D/g,
+                                  ""
+                                )}`,
+                                "_blank"
+                              );
+                            }}
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1.5 text-green-600" />
+                            {t("requests.whatsapp")}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50"
+                            onClick={() => {
+                              const phoneNumber =
+                                currentRole === "elder"
+                                  ? request.volunteer_phone_number
+                                  : request.elder_phone_number;
+                              window.location.href = `tel:${phoneNumber}`;
+                            }}
+                          >
+                            <Phone className="h-4 w-4 mr-1.5 text-blue-600" />
+                            {t("requests.call")}
+                          </Button>
+                        </div>
                       )}
                     </CardFooter>
                   </Card>

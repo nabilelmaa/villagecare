@@ -136,7 +136,11 @@
         "statusRejected": "Demande rejetée avec succès",
         "statusCompleted": "Demande terminée avec succès",
         "statusCanceled": "Demande annulée avec succès",
-        "statusUpdated": "Statut mis à jour avec succès"
+        "statusUpdated": "Statut mis à jour avec succès",
+        "whatsapp": "WhatsApp",
+        "call": "Appeler",
+        "volunteerPhone": "Téléphone du bénévole",
+        "elderPhone": "Téléphone du senior"
     },
     "favorites": {
         "title": "Mes favoris",
